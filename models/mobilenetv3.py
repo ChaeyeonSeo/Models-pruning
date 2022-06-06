@@ -208,7 +208,7 @@ class MobileNetV3(nn.Module):
         last_channels_num = _ensure_divisible(last_channels_num * width_multiplier, divisor) if width_multiplier > 1 else last_channels_num
         feature_extraction_layers = []
         first_layer = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=input_channels_num, kernel_size=3, stride=s, padding=1, bias=False),
+            nn.Conv2d(in_channels=3, out_channels=input_channels_num, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(num_features=input_channels_num, momentum=BN_momentum),
             H_swish()
         )
