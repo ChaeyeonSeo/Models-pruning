@@ -6,9 +6,18 @@ for more details.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import time
 
+total_time = 0
+conv1_time = 0
+bn1_time = 0
+relu1_time = 0
+conv2_time = 0
+bn2_time = 0
+relu2_time = 0
 
 class Block(nn.Module):
+    global total_time, conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time
     '''Depthwise conv + Pointwise conv'''
     def __init__(self, in_planes, out_planes, stride=1):
         super(Block, self).__init__()
@@ -18,8 +27,26 @@ class Block(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_planes)
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.bn2(self.conv2(out)))
+        start = time.time()
+        out = self.conv1(x)
+        conv1_time += (time.time() - start)
+        start = time.time()
+        out = self.bn1(out)
+        bn1_time += (time.time() - start)
+        start = time.time()
+        out = F.relu(out)
+        relu1_time += (time.time() - start)
+        start = time.time()
+        out = self.conv2(out)
+        conv2_time += (time.time() - start)
+        start = time.time()
+        out = self.bn2(out)
+        bn2_time += (time.time() - start)
+        start = time.time()
+        out = F.relu(out)
+        relu2_time += (time.time() - start)
+        # out = F.relu(self.bn1(self.conv1(x)))
+        # out = F.relu(self.bn2(self.conv2(out)))
         return out
 
 
@@ -49,13 +76,15 @@ class MobileNet(nn.Module):
         out = F.avg_pool2d(out, 2)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
+        print(conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time)
         return out
 
 
 def test():
-    net = MobileNet()
+    net = torch.load
     x = torch.randn(1,3,32,32)
     y = net(x)
     print(y.size())
+
 
 # test()
