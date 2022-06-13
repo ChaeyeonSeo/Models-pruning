@@ -1,3 +1,4 @@
+import csv
 import sys
 import torch
 import torch.nn as nn
@@ -5,6 +6,7 @@ import torchsummary
 import torchvision.datasets as dsets
 import torchvision.transforms as transforms
 import argparse
+import matplotlib.pyplot as plt
 import time
 import pandas as pd
 
@@ -17,15 +19,21 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # Argument parser
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
-parser.add_argument('--epochs', type=int, default=200, help='Number of epochs to train')
 parser.add_argument('--model', type=str, default='mobilenetv1', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--prune', type=float, default=0.0)
+parser.add_argument('--layer', type=str, default="pointwise", help="all and pointwise")
+parser.add_argument('--mode', type=int, default=2, help="pruning: 1, measurement: 2")
 args = parser.parse_args()
 
 # Always make assignments to local variables from your args at the beginning of your code for better
 # control and adaptability
-num_epochs = args.epochs
 batch_size = args.batch_size
 model_name = args.model
+prune_val = args.prune
+layer = args.layer
+mode = args.mode
+
+model_path = f"{model_name}/{layer}/prune_{prune_val}"
 
 random_seed = 1
 torch.manual_seed(random_seed)
@@ -53,7 +61,7 @@ model_names = {
     'mobilenetv3': MobileNetV3,
 }
 
-model = model_names.get(model_name, MobileNet)()
+model = model_names.get(model_name, MobileNet)(mode=mode)
 model = model.to(torch.device(device))
 
 # Define your loss and optimizer
@@ -62,12 +70,20 @@ optimizer = torch.optim.Adam(model.parameters())
 
 # Training loop
 total_time = 0
-max_acc = 0
-accuracy = pd.DataFrame(index=range(num_epochs), columns={'Training', 'Testing'})
+conv1_first_time = 0
+conv1_time = 0
+bn1_time = 0
+relu1_time = 0
+conv2_time = 0
+bn2_time = 0
+relu2_time = 0
+avg_pool_time = 0
+linear_time = 0
 
-def load_model(model, path=f"./checkpoints/{model_name}.pt", print_msg=True):
+def load_model(model, path=f"{model_path}/{model_name}.pt", print_msg=True):
     try:
         model = torch.load(path, map_location=torch.device(device))
+        model.change_mode()
         if print_msg:
             print(f"[I] Model loaded from {path}")
         return model
@@ -75,8 +91,8 @@ def load_model(model, path=f"./checkpoints/{model_name}.pt", print_msg=True):
         if print_msg:
             print(f"[E] Model failed to be loaded from {path}")
 
-def test(model, epoch, mode, value):
-    global max_acc
+def test(model, epoch):
+    global total_time, conv1_first_time, conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, avg_pool_time, linear_time
     test_correct = 0
     test_total = 0
     test_loss = 0
@@ -89,7 +105,10 @@ def test(model, epoch, mode, value):
             images = images.to(torch.device(device))
             labels = labels.to(torch.device(device))
             # Perform the actual inference
-            outputs = model(images)
+            start_total = time.time()
+            outputs, conv1_first_time, conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, avg_pool_time, linear_time = model(images)
+            total_time += (time.time() - start_total)
+            # print(outputs)
             # Compute the loss
             loss = criterion(outputs, labels)
             test_loss += loss.item()
@@ -99,14 +118,30 @@ def test(model, epoch, mode, value):
             test_total += labels.size(0)
             test_correct += predicted.eq(labels).sum().item()
     print('Test loss: %.4f Test accuracy: %.2f %%' % (test_loss / (batch_idx + 1), 100. * test_correct / test_total))
-    accuracy.loc[epoch, 'Testing'] = 100. * test_correct / test_total
-    if 100. * test_correct / test_total > max_acc:
-        max_acc = 100. * test_correct / test_total
-        torch.save(model, f"checkpoints/{model_name}_{epoch + 1}.pt")
-
+    # print(conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time)
 
 model = load_model(model)
-test(model, 0, mode='Non-pruned model', value='True')
+test(model, 0)
+
+# print(conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time)
+
+labels = 'Conv_first','Conv1', 'bn1', 'ReLU1', 'Conv2', 'bn2', 'ReLU2', 'Pooling', 'Linear'
+sizes = [conv1_first_time, conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, avg_pool_time, linear_time]
+fig1, ax1 = plt.subplots()
+ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=0)
+ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+plt.tight_layout()
+plt.savefig(f'{model_path}/layers_{prune_val}.png')
+# plt.show()
 
 torchsummary.summary(model, (3, 32, 32))
-print(f'Training time: {total_time}s')
+print(f'Total time: {total_time}s')
+
+# open the file in the write mode
+with open(f'{model_name}/{layer}/inference_time.csv', 'a') as f:
+    # create the csv writer
+    writer = csv.writer(f)
+    # write a row to the csv files
+    data = [total_time]
+    writer.writerow(data)
+

@@ -18,7 +18,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs to train')
-parser.add_argument('--model', type=str, default='mobilenetv3', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='mobilenetv1', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 args = parser.parse_args()
 
 # Always make assignments to local variables from your args at the beginning of your code for better
@@ -128,7 +128,7 @@ for epoch in range(num_epochs):
     accuracy.loc[epoch, 'Testing'] = 100. * test_correct / test_total
     if 100. * test_correct / test_total > max_acc:
         max_acc = 100. * test_correct / test_total
-        torch.save(model, f"checkpoints/{model_name}_{epoch + 1}.pt")
+        torch.save(model, f"checkpoints/{model_name}_1_{epoch + 1}.pt")
 
 torchsummary.summary(model, (3, 32, 32))
 accuracy.to_csv(f'{model_name}_accuracy.csv')
