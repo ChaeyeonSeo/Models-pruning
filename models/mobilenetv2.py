@@ -6,10 +6,28 @@ Mobile Networks for Classification, Detection and Segmentation" for more details
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import time
 
+total_time = 0
+conv1_first_time = 0
+bn1_first_time = 0
+relu1_first_time = 0
+conv1_time = 0
+bn1_time = 0
+relu1_time = 0
+conv2_time = 0
+bn2_time = 0
+relu2_time = 0
+conv3_time = 0
+bn3_time = 0
+conv2_last_time = 0
+bn2_last_time = 0
+relu2_last_time = 0
+avg_pool_time = 0
+linear_time = 0
 
 class Block(nn.Module):
-    '''expand + depthwise + pointwise'''
+    '''expand + depthwise + one'''
     def __init__(self, in_planes, out_planes, expansion, stride):
         super(Block, self).__init__()
         self.stride = stride
@@ -30,9 +48,37 @@ class Block(nn.Module):
             )
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.bn2(self.conv2(out)))
-        out = self.bn3(self.conv3(out))
+        global conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, conv3_time, bn3_time
+
+        # Expand
+        start = time.time()
+        out = self.conv1(x)
+        conv1_time += (time.time() - start)
+        start = time.time()
+        out = self.bn1(out)
+        bn1_time += (time.time() - start)
+        start = time.time()
+        out = F.relu6(out)
+        relu1_time += (time.time() - start)
+        # Depthwise Conv
+        start = time.time()
+        out = self.conv2(out)
+        conv2_time += (time.time() - start)
+        start = time.time()
+        out = self.bn2(out)
+        bn2_time += (time.time() - start)
+        start = time.time()
+        out = F.relu6(out)
+        relu2_time += (time.time() - start)
+        # Pointwise Conv
+        start = time.time()
+        out = self.conv3(out)
+        conv3_time += (time.time() - start)
+        start = time.time()
+        out = self.bn3(out)
+        bn3_time += (time.time() - start)
+        # Residual
+        # shortcut time?
         out = out + self.shortcut(x) if self.stride==1 else out
         return out
 
@@ -57,6 +103,11 @@ class MobileNetV2(nn.Module):
         self.bn2 = nn.BatchNorm2d(1280)
         self.linear = nn.Linear(1280, num_classes)
 
+        self.mode = 1
+
+    def change_mode(self):
+        self.mode = 2
+
     def _make_layers(self, in_planes):
         layers = []
         for expansion, out_planes, num_blocks, stride in self.cfg:
@@ -67,14 +118,51 @@ class MobileNetV2(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
+        global conv1_first_time, bn1_first_time, relu1_first_time, conv1_time, \
+            bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, conv3_time, bn3_time, \
+            conv2_last_time, bn2_last_time, relu2_last_time, avg_pool_time, linear_time
+
+        # first
+        start = time.time()
+        out = self.conv1(x)
+        conv1_first_time += (time.time() - start)
+        start = time.time()
+        out = self.bn1(out)
+        bn1_first_time += (time.time() - start)
+        start = time.time()
+        out = F.relu6(out)
+        relu1_first_time += (time.time() - start)
+        # blocks
         out = self.layers(out)
-        out = F.relu(self.bn2(self.conv2(out)))
+        # 1x1 Conv
+        start = time.time()
+        out = self.conv2(out)
+        conv2_last_time += (time.time() - start)
+        start = time.time()
+        out = self.bn2(out)
+        bn2_last_time += (time.time() - start)
+        start = time.time()
+        out = F.relu6(out)
+        relu2_last_time += (time.time() - start)
+        # Avg Pooling
         # NOTE: change pooling kernel_size 7 -> 4 for CIFAR10
+        start = time.time()
         out = F.avg_pool2d(out, 4)
+        avg_pool_time += (time.time() - start)
         out = out.view(out.size(0), -1)
+        # Linear
+        start = time.time()
         out = self.linear(out)
-        return out
+        linear_time += (time.time() - start)
+
+        # Pruning
+        if self.mode == 1:
+            return out
+
+        # Measurement
+        return out, conv1_first_time, bn1_first_time, relu1_first_time, conv1_time, \
+            bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, conv3_time, bn3_time, \
+            conv2_last_time, bn2_last_time, relu2_last_time, avg_pool_time, linear_time
 
 
 def test():

@@ -25,7 +25,7 @@ parser.add_argument('--batch_size', type=int, default=128, help='Number of sampl
 parser.add_argument('--finetune_epochs', type=int, default=10, help='Number of epochs to finetune')
 parser.add_argument('--model', type=str, default='mobilenetv1', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.1)
-parser.add_argument('--layer', type=str, default="pointwise", help="all and pointwise")
+parser.add_argument('--layer', type=str, default="one", help="one, two, three and all")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
 args = parser.parse_args()
 
@@ -37,7 +37,7 @@ layer = args.layer
 mode = args.mode
 
 # model name: mobilenetv1, mobilenetv2, mobilenetv3
-# layer: all, pointwise
+# layer: all, one
 # prune: 0.05 ~ 0.9
 # finetune: 0 ~ 200
 model_path = f"{model_name}/{layer}/prune_{prune_val}"
@@ -212,21 +212,47 @@ def prune_linear(linear, amount):
     plan = DG.get_pruning_plan(linear, tp.prune_linear, pruning_index)
     plan.exec()
 
-# first layer
-if layer == "all":
-    prune_conv(model.conv1, amount=prune_val)
-    prune_bn(model.bn1, amount=prune_val)
-    for m in model.modules():
-        if isinstance(m, models.mobilenetv1.Block):
-            prune_conv(m.conv1, amount=prune_val)
-            prune_bn(m.bn1, amount=prune_val)
-            prune_conv(m.conv2, amount=prune_val)
-            prune_bn(m.bn2, amount=prune_val)
-    # prune_linear(model.linear, amount=prune_val)
-else:
-    for m in model.modules():
-        if isinstance(m, models.mobilenetv1.Block):
-            prune_conv(m.conv2, amount=prune_val)
+if model_name == 'mobilenetv1':
+    # first layer
+    if layer == "all":
+        prune_conv(model.conv1, amount=prune_val)
+        prune_bn(model.bn1, amount=prune_val)
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv1.Block):
+                prune_conv(m.conv1, amount=prune_val)
+                prune_bn(m.bn1, amount=prune_val)
+                prune_conv(m.conv2, amount=prune_val)
+                prune_bn(m.bn2, amount=prune_val)
+        # prune_linear(model.linear, amount=prune_val)
+    else:
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv1.Block):
+                prune_conv(m.conv2, amount=prune_val)
+
+elif model_name == 'mobilenetv2':
+    if layer =='all':
+        prune_conv(model.conv1, amount=prune_val)
+        prune_bn(model.bn1, amount=prune_val)
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv1.Block):
+                prune_conv(m.conv1, amount=prune_val)
+                prune_bn(m.bn1, amount=prune_val)
+                prune_conv(m.conv2, amount=prune_val)
+                prune_bn(m.bn2, amount=prune_val)
+                prune_conv(m.conv3, amount=prune_val)
+                prune_bn(m.bn3, amount=prune_val)
+        prune_conv(model.conv2, amount=prune_val)
+        prune_bn(model.bn2, amount=prune_val)
+        # prune_linear(model.linear, amount=prune_val)
+    elif layer == 'one':
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv2.Block):
+                prune_conv(m.conv1, amount=prune_val)
+    elif layer == 'two':
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv2.Block):
+                prune_conv(m.conv1, amount=prune_val)
+                prune_conv(m.conv3, amount=prune_val)
 
 max_acc = 0
 model = model.to(torch.device(device))

@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 
 class Block(nn.Module):
-    '''expand + depthwise + pointwise'''
+    '''expand + depthwise + one'''
     def __init__(self, in_planes, out_planes, expansion, stride):
         super(Block, self).__init__()
         self.stride = stride
@@ -30,8 +30,8 @@ class Block(nn.Module):
             )
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.bn2(self.conv2(out)))
+        out = F.relu6(self.bn1(self.conv1(x)))
+        out = F.relu6(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
         out = out + self.shortcut(x) if self.stride==1 else out
         return out
@@ -67,9 +67,9 @@ class MobileNetV2(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu6(self.bn1(self.conv1(x)))
         out = self.layers(out)
-        out = F.relu(self.bn2(self.conv2(out)))
+        out = F.relu6(self.bn2(self.conv2(out)))
         # NOTE: change pooling kernel_size 7 -> 4 for CIFAR10
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)

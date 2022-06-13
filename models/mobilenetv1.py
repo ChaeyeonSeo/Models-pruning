@@ -99,10 +99,12 @@ class MobileNet(nn.Module):
         out = self.linear(out)
         linear_time += (time.time() - start)
 
-        if self.mode == 1: # Pruning
+        # Pruning
+        if self.mode == 1:
             return out
-        else: # Measurement
-            return out, conv1_first_time, conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, avg_pool_time, linear_time
+
+        # Measurement
+        return out, conv1_first_time, conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, avg_pool_time, linear_time
 
 def test():
     net = torch.load
