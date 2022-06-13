@@ -53,7 +53,7 @@ model_names = {
     'mobilenetv3': MobileNetV3,
 }
 
-model = model_names.get(model_name, MobileNet)(mode='small')
+model = model_names.get(model_name, MobileNet)()
 model = model.to(torch.device(device))
 
 # Define your loss and optimizer
