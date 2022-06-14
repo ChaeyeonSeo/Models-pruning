@@ -8,7 +8,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import time
 
-total_time = 0
 conv1_first_time = 0
 bn1_first_time = 0
 relu1_first_time = 0
@@ -48,7 +47,8 @@ class Block(nn.Module):
             )
 
     def forward(self, x):
-        global conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, conv3_time, bn3_time
+        global conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, \
+            relu2_time, conv3_time, bn3_time
 
         # Expand
         start = time.time()

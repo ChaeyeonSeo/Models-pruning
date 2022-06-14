@@ -6,6 +6,27 @@ for more details.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import time
+
+conv1_first_time = 0
+bn1_first_time = 0
+nl1_first_time = 0
+conv1_time = 0
+bn1_time = 0
+nl1_time = 0
+conv2_time = 0
+bn2_time = 0
+nl2_time = 0
+conv3_time = 0
+bn3_time = 0
+se_time = 0
+conv2_last_time = 0
+bn2_last_time = 0
+nl2_last_time = 0
+avg_pool_time = 0
+conv3_last_time = 0
+nl3_last_time = 0
+linear_time = 0
 
 
 class H_sigmoid(nn.Module):
@@ -83,19 +104,49 @@ class Block(nn.Module):
             )
 
     def forward(self, x, expand=False):
-        out = self.nl1(self.bn1(self.conv1(x)))
-        out = self.nl2(self.bn2(self.conv2(out)))
+        global conv1_time, bn1_time, nl1_time, conv2_time, bn2_time, \
+            nl2_time, se_time, conv3_time, bn3_time
+        # Conv1
+        start = time.time()
+        out = self.conv1(x)
+        conv1_time += (time.time() - start)
+        start = time.time()
+        out = self.bn1(out)
+        bn1_time += (time.time() - start)
+        start = time.time()
+        out = self.nl1(out)
+        nl1_time += (time.time() - start)
+        start = time.time()
+        # Conv2
+        out = self.conv2(out)
+        conv2_time += (time.time() - start)
+        start = time.time()
+        out = self.bn2(out)
+        bn2_time += (time.time() - start)
+        start = time.time()
+        out = self.nl2(out)
+        nl2_time += (time.time() - start)
+        start = time.time()
+        # SE
         out = self.se(out)
-        out = self.bn3(self.conv3(out))
+        se_time += (time.time() - start)
+        start = time.time()
+        # Conv3
+        out = self.conv3(out)
+        conv3_time += (time.time() - start)
+        start = time.time()
+        out = self.bn3(out)
+        bn3_time += (time.time() - start)
+        # Residual
         out = out + self.shortcut(x) if self.stride == 1 else out
         return out
 
 
 class MobileNetV3(nn.Module):
-    def __init__(self, mode='small', num_classes=10):
+    def __init__(self, case='small', num_classes=10):
         super(MobileNetV3, self).__init__()
 
-        if mode == 'large': # MobileNetV3-Large
+        if case == 'large':  # MobileNetV3-Large
             self.cfg = [
                 # kernel_size, expansion, out_planes, SE, NL, stride
                 [3, 16, 16, False, 'RE', 1],
@@ -114,7 +165,7 @@ class MobileNetV3(nn.Module):
                 [5, 960, 160, True, 'HS', 1],
                 [5, 960, 160, True, 'HS', 1]
             ]
-        elif mode == 'small': # MobileNetV3-Small
+        elif case == 'small':  # MobileNetV3-Small
             self.cfg = [
                 # kernel_size, expansion, out_planes, use_SE, NL, stride
                 [3, 16, 16, True, 'RE', 1],  # NOTE: change stride 2 -> 1 for CIFAR10
@@ -130,7 +181,7 @@ class MobileNetV3(nn.Module):
                 [5, 576, 96, True, 'HS', 1]
             ]
 
-        last_channels_num = 1280 if mode == 'large' else 1024
+        last_channels_num = 1280 if case == 'large' else 1024
 
         self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
@@ -150,16 +201,66 @@ class MobileNetV3(nn.Module):
         self.nl3 = H_swish()
         self.linear = nn.Linear(last_channels_num, num_classes)
 
+        self.mode = 1
+
+    def change_mode(self):
+        self.mode = 2
+
     def forward(self, x):
-        out = self.nl1(self.bn1(self.conv1(x)))
+        global conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
+            bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
+            bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
+            conv3_last_time, nl3_last_time, linear_time
+
+        # first
+        start = time.time()
+        out = self.conv1(x)
+        conv1_first_time += (time.time() - start)
+        start = time.time()
+        out = self.bn1(out)
+        bn1_first_time += (time.time() - start)
+        start = time.time()
+        out = self.nl1(out)
+        nl1_first_time += (time.time() - start)
+        # blocks
         out = self.layers(out)
-        out = self.nl2(self.bn2(self.conv2(out)))
+        # 1x1 Conv
+        start = time.time()
+        out = self.conv2(out)
+        conv2_last_time += (time.time() - start)
+        start = time.time()
+        out = self.bn2(out)
+        bn2_last_time += (time.time() - start)
+        start = time.time()
+        out = self.nl2(out)
+        nl2_last_time += (time.time() - start)
+        # Avg Pooling
         # NOTE: change pooling kernel_size 7 -> 4 for CIFAR10
+        start = time.time()
         out = F.avg_pool2d(out, 4)
-        out = self.nl3(self.conv3(out))
+        avg_pool_time += (time.time() - start)
+        # 1x1 Conv
+        start = time.time()
+        out = self.conv3(out)
+        conv3_last_time += (time.time() - start)
+        start = time.time()
+        out = self.nl3(out)
+        nl3_last_time += (time.time() - start)
         out = out.view(out.size(0), -1)
+        # Linear
+        start = time.time()
         out = self.linear(out)
-        return out
+        linear_time += (time.time() - start)
+
+        # Pruning
+        if self.mode == 1:
+            return out
+
+        # Measurement
+        return out, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
+            bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
+            bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
+            conv3_last_time, linear_time
 
 
 def test():

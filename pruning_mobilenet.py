@@ -22,10 +22,10 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # Argument parser
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
-parser.add_argument('--finetune_epochs', type=int, default=10, help='Number of epochs to finetune')
-parser.add_argument('--model', type=str, default='mobilenetv1', help='mobilenetv1, mobilenetv2, or mobilenetv3')
-parser.add_argument('--prune', type=float, default=0.1)
-parser.add_argument('--layer', type=str, default="one", help="one, two, three and all")
+parser.add_argument('--finetune_epochs', type=int, default=2, help='Number of epochs to finetune')
+parser.add_argument('--model', type=str, default='mobilenetv2', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--prune', type=float, default=0.0)
+parser.add_argument('--layer', type=str, default="all", help="one, two, three and all")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
 args = parser.parse_args()
 
@@ -95,7 +95,7 @@ def model_size(model, count_zeros=True):
     else:
         return int(total_params)
 
-model = model_names.get(model_name, models.mobilenetv1.MobileNet)(mode=mode)
+model = model_names.get(model_name, models.mobilenetv1.MobileNet)()
 model = model.to(torch.device(device))
 
 # Define your loss and optimizer
@@ -234,7 +234,7 @@ elif model_name == 'mobilenetv2':
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         for m in model.modules():
-            if isinstance(m, models.mobilenetv1.Block):
+            if isinstance(m, models.mobilenetv2.Block):
                 prune_conv(m.conv1, amount=prune_val)
                 prune_bn(m.bn1, amount=prune_val)
                 prune_conv(m.conv2, amount=prune_val)
@@ -252,6 +252,10 @@ elif model_name == 'mobilenetv2':
         for m in model.modules():
             if isinstance(m, models.mobilenetv2.Block):
                 prune_conv(m.conv1, amount=prune_val)
+                prune_conv(m.conv3, amount=prune_val)
+    elif layer == 'three':
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv2.Block):
                 prune_conv(m.conv3, amount=prune_val)
 
 max_acc = 0
@@ -275,7 +279,9 @@ with open(f'{model_name}/{layer}/no_finetuning_accuracy.csv', 'a') as f:
 for fine_tune_epoch in range(finetune_epochs):
     train(model, fine_tune_epoch)
     test(model, fine_tune_epoch)
-accuracy.to_csv(f'{model_path}/accuracy.csv')
+
+
+accuracy.to_csv(f'{model_path}/accuracy.csv', index=False)
 # torchsummary.summary(model, (3, 32, 32))
 # test(model, 0)
 

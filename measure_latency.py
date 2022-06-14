@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3'
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--model', type=str, default='mobilenetv2', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.0)
-parser.add_argument('--layer', type=str, default="all", help="all and one")
+parser.add_argument('--layer', type=str, default="one", help="all, one, two, and three")
 parser.add_argument('--mode', type=int, default=2, help="pruning: 1, measurement: 2")
 args = parser.parse_args()
 
@@ -165,10 +165,7 @@ elif model_name == 'mobilenetv2':
              conv2_last_time, bn2_last_time, relu2_last_time, avg_pool_time, linear_time]
 
 df = pd.DataFrame(data={'layer': layer_labels, 'value': sizes})
-print(df)
-
 df = df.sort_values('value', ascending=False)
-print(df)
 
 df2 = df[:9].copy()
 
