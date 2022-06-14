@@ -22,9 +22,9 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # Argument parser
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
-parser.add_argument('--finetune_epochs', type=int, default=2, help='Number of epochs to finetune')
-parser.add_argument('--model', type=str, default='mobilenetv2', help='mobilenetv1, mobilenetv2, or mobilenetv3')
-parser.add_argument('--prune', type=float, default=0.0)
+parser.add_argument('--finetune_epochs', type=int, default=10, help='Number of epochs to finetune')
+parser.add_argument('--model', type=str, default='mobilenetv3', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--prune', type=float, default=0.1)
 parser.add_argument('--layer', type=str, default="all", help="one, two, three and all")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
 args = parser.parse_args()
@@ -257,6 +257,32 @@ elif model_name == 'mobilenetv2':
         for m in model.modules():
             if isinstance(m, models.mobilenetv2.Block):
                 prune_conv(m.conv3, amount=prune_val)
+
+else: # mobilenetv3
+    if layer == 'all':
+        prune_conv(model.conv1, amount=prune_val)
+        prune_bn(model.bn1, amount=prune_val)
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv3.Block):
+                prune_conv(m.conv1, amount=prune_val)
+                prune_bn(m.bn1, amount=prune_val)
+                prune_conv(m.conv2, amount=prune_val)
+                prune_bn(m.bn2, amount=prune_val)
+                prune_conv(m.conv3, amount=prune_val)
+                prune_bn(m.bn3, amount=prune_val)
+        prune_conv(model.conv2, amount=prune_val)
+        prune_bn(model.bn2, amount=prune_val)
+        prune_conv(model.conv3, amount=prune_val)
+    if layer == 'one':
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv3.Block):
+                prune_conv(m.conv1, amount=prune_val)
+    elif layer == 'two':
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv3.Block):
+                prune_conv(m.conv1, amount=prune_val)
+                prune_conv(m.conv3, amount=prune_val)
+
 
 max_acc = 0
 model = model.to(torch.device(device))

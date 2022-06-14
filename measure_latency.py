@@ -20,7 +20,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--model', type=str, default='mobilenetv2', help='mobilenetv1, mobilenetv2, or mobilenetv3')
-parser.add_argument('--prune', type=float, default=0.0)
+parser.add_argument('--prune', type=float, default=0.1)
 parser.add_argument('--layer', type=str, default="one", help="all, one, two, and three")
 parser.add_argument('--mode', type=int, default=2, help="pruning: 1, measurement: 2")
 args = parser.parse_args()
@@ -73,18 +73,25 @@ total_time = 0
 conv1_first_time = 0
 bn1_first_time = 0
 relu1_first_time = 0
+nl1_first_time = 0
 conv1_time = 0
 bn1_time = 0
 relu1_time = 0
+nl1_time = 0
 conv2_time = 0
 bn2_time = 0
 relu2_time = 0
+nl2_time = 0
 conv3_time = 0
 bn3_time = 0
+se_time = 0
 conv2_last_time = 0
 bn2_last_time = 0
+nl2_last_time = 0
 relu2_last_time = 0
 avg_pool_time = 0
+conv3_last_time = 0
+nl3_last_time = 0
 linear_time = 0
 
 
@@ -128,9 +135,10 @@ def test(model, epoch):
                 conv2_last_time, bn2_last_time, relu2_last_time, avg_pool_time, linear_time = model(images)
 
             else:  # mobilenetv3
-                outputs, conv1_first_time, bn1_first_time, relu1_first_time, conv1_time, \
-                bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, conv3_time, bn3_time, \
-                conv2_last_time, bn2_last_time, relu2_last_time, avg_pool_time, linear_time = model(images)
+                outputs, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
+                bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
+                bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
+                conv3_last_time, linear_time = model(images)
 
             total_time += (time.time() - start_total)
             # print(outputs)
@@ -164,21 +172,31 @@ elif model_name == 'mobilenetv2':
              bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, conv3_time, bn3_time,
              conv2_last_time, bn2_last_time, relu2_last_time, avg_pool_time, linear_time]
 
+else:  # mobilenetv3
+    layer_labels = ['Conv1_first', 'bn1_first', 'nl1_first', 'Conv1',
+                    'bn1', 'nl1', 'Conv2', 'bn2', 'nl2', 'SE', 'Conv3', 'bn3',
+                    'Conv2_last', 'bn2_last', 'nl2_last', 'Pooling',
+                    'Conv3_last', 'bn3_last', 'Linear']
+    sizes = [conv1_first_time, bn1_first_time, nl1_first_time, conv1_time,
+             bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time,
+             bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time,
+             conv3_last_time, nl3_last_time, linear_time]
+
 df = pd.DataFrame(data={'layer': layer_labels, 'value': sizes})
 df = df.sort_values('value', ascending=False)
 
-df2 = df[:9].copy()
-
-new_row = pd.DataFrame(data={
-    'layer': ['others'],
-    'value': [df['value'][9:].sum()]
-})
-
-df2 = pd.concat([df2, new_row])
+# df2 = df[:9].copy()
+#
+# new_row = pd.DataFrame(data={
+#     'layer': ['others'],
+#     'value': [df['value'][9:].sum()]
+# })
+#
+# df2 = pd.concat([df2, new_row])
 
 fig1, ax1 = plt.subplots()
-ax1.pie(df2['value'], labels=df2['layer'], autopct='%1.1f%%', startangle=180)
-# ax1.pie(sizes, labels=layer_labels, autopct='%1.1f%%', startangle=180)
+# ax1.pie(df2['value'], labels=df2['layer'], autopct='%1.1f%%', startangle=180)
+ax1.pie(sizes, labels=layer_labels, autopct='%1.1f%%', startangle=180)
 ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 plt.tight_layout()
 plt.savefig(f'{model_path}/layers_{prune_val}.png')
