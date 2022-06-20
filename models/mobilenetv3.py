@@ -260,7 +260,7 @@ class MobileNetV3(nn.Module):
         return out, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
             bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
             bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
-            conv3_last_time, linear_time
+            conv3_last_time, nl3_last_time, linear_time
 
 
 def test():

@@ -13,15 +13,16 @@ import pandas as pd
 from models.mobilenetv1 import MobileNet
 from models.mobilenetv2 import MobileNetV2
 from models.mobilenetv3 import MobileNetV3
+from models.efficientnet import  EfficientNet
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Argument parser
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
-parser.add_argument('--model', type=str, default='mobilenetv2', help='mobilenetv1, mobilenetv2, or mobilenetv3')
-parser.add_argument('--prune', type=float, default=0.1)
-parser.add_argument('--layer', type=str, default="one", help="all, one, two, and three")
+parser.add_argument('--model', type=str, default='efficientnet', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--prune', type=float, default=0.0)
+parser.add_argument('--layer', type=str, default="all", help="all, one, two, and three")
 parser.add_argument('--mode', type=int, default=2, help="pruning: 1, measurement: 2")
 args = parser.parse_args()
 
@@ -59,6 +60,7 @@ model_names = {
     'mobilenetv1': MobileNet,
     'mobilenetv2': MobileNetV2,
     'mobilenetv3': MobileNetV3,
+    'efficientnet': EfficientNet
 }
 
 model = model_names.get(model_name, MobileNet)()
@@ -108,9 +110,10 @@ def load_model(model, path=f"{model_path}/{model_name}.pt", print_msg=True):
 
 
 def test(model, epoch):
-    global total_time, conv1_first_time, bn1_first_time, relu1_first_time, conv1_time, \
-        bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, conv3_time, bn3_time, \
-        conv2_last_time, bn2_last_time, relu2_last_time, avg_pool_time, linear_time
+    global total_time, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
+        bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, bn3_time, \
+        conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, conv3_last_time, \
+        nl3_last_time, linear_time
 
     test_correct = 0
     test_total = 0
@@ -126,19 +129,24 @@ def test(model, epoch):
             # Perform the actual inference
             start_total = time.time()
             if model_name == 'mobilenetv1':
-                outputs, conv1_first_time, conv1_time, bn1_time, relu1_time, \
-                conv2_time, bn2_time, relu2_time, avg_pool_time, linear_time = model(images)
+                outputs, conv1_first_time, conv1_time, bn1_time, nl1_time, \
+                conv2_time, bn2_time, nl2_time, avg_pool_time, linear_time = model(images)
 
             elif model_name == 'mobilenetv2':
-                outputs, conv1_first_time, bn1_first_time, relu1_first_time, conv1_time, \
-                bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, conv3_time, bn3_time, \
-                conv2_last_time, bn2_last_time, relu2_last_time, avg_pool_time, linear_time = model(images)
+                outputs, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
+                bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, conv3_time, bn3_time, \
+                conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, linear_time = model(images)
 
-            else:  # mobilenetv3
+            elif model_name == 'mobilenetv3':
                 outputs, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
                 bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
                 bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
-                conv3_last_time, linear_time = model(images)
+                conv3_last_time, nl3_last_time, linear_time = model(images)
+            else:  # efficientnet
+                outputs, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
+                bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
+                bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
+                linear_time = model(images)
 
             total_time += (time.time() - start_total)
             # print(outputs)
@@ -161,18 +169,18 @@ test(model, 0)
 if model_name == 'mobilenetv1':
     layer_labels = ['Conv_first', 'Conv1', 'bn1', 'ReLU1', 'Conv2', 'bn2',
                     'ReLU2', 'Pooling', 'Linear']
-    sizes = [conv1_first_time, conv1_time, bn1_time, relu1_time, conv2_time,
-             bn2_time, relu2_time, avg_pool_time, linear_time]
+    sizes = [conv1_first_time, conv1_time, bn1_time, nl1_time, conv2_time,
+             bn2_time, nl2_time, avg_pool_time, linear_time]
 
 elif model_name == 'mobilenetv2':
     layer_labels = ['Conv_first', 'bn_first', 'relu_first', 'Conv1',
                     'bn1', 'ReLU1', 'Conv2', 'bn2', 'ReLU2', 'Conv3', 'bn3',
                     'Conv_last', 'bn_last', 'relu_last', 'Pooling', 'Linear']
-    sizes = [conv1_first_time, bn1_first_time, relu1_first_time, conv1_time,
-             bn1_time, relu1_time, conv2_time, bn2_time, relu2_time, conv3_time, bn3_time,
+    sizes = [conv1_first_time, bn1_first_time, nl1_first_time, conv1_time,
+             bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, conv3_time, bn3_time,
              conv2_last_time, bn2_last_time, relu2_last_time, avg_pool_time, linear_time]
 
-else:  # mobilenetv3
+elif model_name == 'mobilenetv3':  # mobilenetv3
     layer_labels = ['Conv1_first', 'bn1_first', 'nl1_first', 'Conv1',
                     'bn1', 'nl1', 'Conv2', 'bn2', 'nl2', 'SE', 'Conv3', 'bn3',
                     'Conv2_last', 'bn2_last', 'nl2_last', 'Pooling',
@@ -182,21 +190,29 @@ else:  # mobilenetv3
              bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time,
              conv3_last_time, nl3_last_time, linear_time]
 
+else: # efficientnet
+    layer_labels = ['Conv1_first', 'bn1_first', 'nl1_first', 'Conv1',
+                    'bn1', 'nl1', 'Conv2', 'bn2', 'nl2', 'SE', 'Conv3', 'bn3',
+                    'Conv2_last', 'bn2_last', 'nl2_last', 'Pooling',  'Linear']
+    sizes = [conv1_first_time, bn1_first_time, nl1_first_time, conv1_time,
+             bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time,
+             bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, linear_time]
+
 df = pd.DataFrame(data={'layer': layer_labels, 'value': sizes})
 df = df.sort_values('value', ascending=False)
 
-# df2 = df[:9].copy()
-#
-# new_row = pd.DataFrame(data={
-#     'layer': ['others'],
-#     'value': [df['value'][9:].sum()]
-# })
-#
-# df2 = pd.concat([df2, new_row])
+df2 = df[:9].copy()
+
+new_row = pd.DataFrame(data={
+    'layer': ['others'],
+    'value': [df['value'][9:].sum()]
+})
+
+df2 = pd.concat([df2, new_row])
 
 fig1, ax1 = plt.subplots()
-# ax1.pie(df2['value'], labels=df2['layer'], autopct='%1.1f%%', startangle=180)
-ax1.pie(sizes, labels=layer_labels, autopct='%1.1f%%', startangle=180)
+ax1.pie(df2['value'], labels=df2['layer'], autopct='%1.1f%%', startangle=180)
+# ax1.pie(sizes, labels=layer_labels, autopct='%1.1f%%', startangle=180)
 ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 plt.tight_layout()
 plt.savefig(f'{model_path}/layers_{prune_val}.png')

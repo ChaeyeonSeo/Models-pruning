@@ -11,6 +11,8 @@ import pandas as pd
 from models.mobilenetv1 import MobileNet
 from models.mobilenetv2 import MobileNetV2
 from models.mobilenetv3 import MobileNetV3
+from models.vgg16 import VGG16
+from models.efficientnet import EfficientNet
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -18,7 +20,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs to train')
-parser.add_argument('--model', type=str, default='mobilenetv3', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='efficientnet', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 args = parser.parse_args()
 
 # Always make assignments to local variables from your args at the beginning of your code for better
@@ -51,6 +53,8 @@ model_names = {
     'mobilenetv1': MobileNet,
     'mobilenetv2': MobileNetV2,
     'mobilenetv3': MobileNetV3,
+    'vgg16': VGG16,
+    'efficientnet': EfficientNet
 }
 
 model = model_names.get(model_name, MobileNet)()
