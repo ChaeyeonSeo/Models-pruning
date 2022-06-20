@@ -1,16 +1,20 @@
 #!/bin/sh
-# mobilenetv2 two
-python pruning_mobilenet.py --prune 0.0 --layer two
-python pruning_mobilenet.py --prune 0.05 --layer two
-python pruning_mobilenet.py --prune 0.1 --layer two
-python pruning_mobilenet.py --prune 0.2 --layer two
-python pruning_mobilenet.py --prune 0.3 --layer two
-python pruning_mobilenet.py --prune 0.4 --layer two
-python pruning_mobilenet.py --prune 0.5 --layer two
-python pruning_mobilenet.py --prune 0.6 --layer two
-python pruning_mobilenet.py --prune 0.7 --layer two
-python pruning_mobilenet.py --prune 0.8 --layer two
-python pruning_mobilenet.py --prune 0.9 --layer two
+# mobilenetv2 all
+python pruning_mobilenet.py --model mobilenetv2 --prune 0.01 --layer all
+python pruning_mobilenet.py --model mobilenetv2 --prune 0.03 --layer all
+python pruning_mobilenet.py --model mobilenetv2 --prune 0.04 --layer all
+
+#python pruning_mobilenet.py --prune 0.0
+#python pruning_mobilenet.py --prune 0.05
+#python pruning_mobilenet.py --prune 0.1
+#python pruning_mobilenet.py --prune 0.2
+#python pruning_mobilenet.py --prune 0.3
+#python pruning_mobilenet.py --prune 0.4
+#python pruning_mobilenet.py --prune 0.5
+#python pruning_mobilenet.py --prune 0.6
+#python pruning_mobilenet.py --prune 0.7
+#python pruning_mobilenet.py --prune 0.8
+#python pruning_mobilenet.py --prune 0.9
 
 #python measure_latency.py --prune 0.0
 #python measure_latency.py --prune 0.05

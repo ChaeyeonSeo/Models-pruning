@@ -25,8 +25,9 @@ parser.add_argument('--batch_size', type=int, default=128, help='Number of sampl
 parser.add_argument('--finetune_epochs', type=int, default=10, help='Number of epochs to finetune')
 parser.add_argument('--model', type=str, default='mobilenetv3', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.1)
-parser.add_argument('--layer', type=str, default="all", help="one, two, three and all")
+parser.add_argument('--layer', type=str, default="one", help="one, two, three and all")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
+parser.add_argument('--strategy', type=str, default="L1", help="L1, L2, and random")
 args = parser.parse_args()
 
 finetune_epochs = args.finetune_epochs
@@ -35,6 +36,7 @@ model_name = args.model
 prune_val = args.prune
 layer = args.layer
 mode = args.mode
+strategy_name = args.strategy
 
 # model name: mobilenetv1, mobilenetv2, mobilenetv3
 # layer: all, one
@@ -103,14 +105,10 @@ criterion = nn.CrossEntropyLoss()  # Softmax is internally computed.
 optimizer = torch.optim.Adam(model.parameters())
 
 # Training loop
-iteration = 0
-total_time = 0
 max_acc = 0
-last_acc = 0
 accuracy = pd.DataFrame(index=range(finetune_epochs+1), columns={'Testing'})
 
 def train(model, epoch):
-    global iteration
     # Training phase
     train_correct = 0
     train_total = 0
@@ -142,12 +140,11 @@ def train(model, epoch):
         #                                                                      len(train_dataset) // batch_size,
         #                                                                      train_loss / (batch_idx + 1),
         #                                                                      100. * train_correct / train_total))
-        iteration += 1
     # print('Accuracy of the model on the 60000 train images: % f %%' % (100. * train_correct / train_total))
     return loss
 
 def test(model, epoch):
-    global max_acc, last_acc
+    global max_acc
     test_correct = 0
     test_total = 0
     test_loss = 0
@@ -181,36 +178,30 @@ def test(model, epoch):
 model = load_model(model)
 test(model, 0)
 
-# torchsummary.summary(model, (3, 32, 32))
-
-model = model.to(torch.device('cpu'))
-
 # Pruning
-# 1. setup strategy (L1 Norm)
-strategy = tp.strategy.L1Strategy()
+model = model.to(torch.device('cpu'))
+# 1. setup strategy
+if strategy_name == 'L1':
+    strategy = tp.strategy.L1Strategy()
+elif strategy_name == 'L2':
+    strategy = tp.strategy.L2Strategy()
+else:
+    strategy = tp.strategy.RandomStrategy()
 
 # 2. build layer dependency for model
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,32,32))
 
 def prune_conv(conv, amount):
-    strategy = tp.strategy.L1Strategy()
     # 3. get a pruning plan from the dependency graph.
     pruning_index = strategy(conv.weight, amount=amount)
     pruning_plan = DG.get_pruning_plan(conv, tp.prune_conv, pruning_index)
     pruning_plan.exec()
 
 def prune_bn(bn, amount):
-    strategy = tp.strategy.L1Strategy()
     pruning_index = strategy(bn.weight, amount=amount)
-    plan = DG.get_pruning_plan(bn, tp.prune_batchnorm, pruning_index)
-    plan.exec()
-
-def prune_linear(linear, amount):
-    strategy = tp.strategy.L1Strategy()
-    pruning_index = strategy(linear.weight, amount=amount)
-    plan = DG.get_pruning_plan(linear, tp.prune_linear, pruning_index)
-    plan.exec()
+    pruning_plan = DG.get_pruning_plan(bn, tp.prune_batchnorm, pruning_index)
+    pruning_plan.exec()
 
 if model_name == 'mobilenetv1':
     # first layer
@@ -282,44 +273,46 @@ else: # mobilenetv3
             if isinstance(m, models.mobilenetv3.Block):
                 prune_conv(m.conv1, amount=prune_val)
                 prune_conv(m.conv3, amount=prune_val)
-
+    elif layer == 'three':
+        for m in model.modules():
+            if isinstance(m, models.mobilenetv3.Block):
+                prune_conv(m.conv3, amount=prune_val)
 
 max_acc = 0
 model = model.to(torch.device(device))
 
-torchsummary.summary(model, (3, 32, 32))
+# No fine-tuning after pruning
+# torchsummary.summary(model, (3, 32, 32))
 first_acc = test(model, 0)
-
 accuracy.loc[0, 'Testing'] = first_acc
 torch.save(model, f"{model_path}/finetune_0.pt")
 
-# open the file in the write mode
+# No fine-tuning accuracy
 with open(f'{model_name}/{layer}/no_finetuning_accuracy.csv', 'a') as f:
-    # create the csv writer
     writer = csv.writer(f)
-    # write a row to the csv file
-    data = [prune_val, max_acc]
+    data = [prune_val, first_acc]
     writer.writerow(data)
+
+# Number of parameter
+with open(f'{model_name}/{layer}/parameter_num.csv', 'a') as f1:
+    writer1 = csv.writer(f1)
+    parameter_num = model_size(model)
+    data = [prune_val, parameter_num]
+    writer1.writerow(data)
 
 # Fine-tuning
 for fine_tune_epoch in range(finetune_epochs):
     train(model, fine_tune_epoch)
     test(model, fine_tune_epoch)
 
-
+# Fine-tuning accuracy
 accuracy.to_csv(f'{model_path}/accuracy.csv', index=False)
-# torchsummary.summary(model, (3, 32, 32))
-# test(model, 0)
 
-# open the file in the write mode
-with open(f'{model_name}/{layer}/finetuning_best_accuracy.csv', 'a') as f:
-    # create the csv writer
-    writer = csv.writer(f)
-    # write a row to the csv file
+# Fine-tuning best accuracy
+with open(f'{model_name}/{layer}/finetuning_best_accuracy.csv', 'a') as f2:
+    writer2 = csv.writer(f2)
     data = [prune_val, max_acc]
-    writer.writerow(data)
-
+    writer2.writerow(data)
 
 # random_input = torch.randn(1, 3, 32, 32).to(device)
-# torch.save(model, f'checkpoints/{model_name}_{prune_val}_all_layer.pt')
 # torch.onnx.export(model, random_input, f'checkpoints/{model_name}_{prune_val}_{finetune_epochs}.onnx', export_params=True, opset_version=10)
