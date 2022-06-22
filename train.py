@@ -20,7 +20,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs to train')
-parser.add_argument('--model', type=str, default='efficientnet', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='mobilenetv3', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 args = parser.parse_args()
 
 # Always make assignments to local variables from your args at the beginning of your code for better

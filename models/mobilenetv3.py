@@ -19,7 +19,12 @@ bn2_time = 0
 nl2_time = 0
 conv3_time = 0
 bn3_time = 0
-se_time = 0
+se_avg_time = 0
+se_linear1_time = 0
+se_nl1_time = 0
+se_linear2_time = 0
+se_nl2_time = 0
+se_mult_time = 0
 conv2_last_time = 0
 bn2_last_time = 0
 nl2_last_time = 0
@@ -45,28 +50,6 @@ class H_swish(nn.Module):
         return x * F.relu6(x + 3) / 6
 
 
-class SEModule(nn.Module):
-    def __init__(self, in_channels_num, reduction_ratio=4):
-        super(SEModule, self).__init__()
-
-        if in_channels_num % reduction_ratio != 0:
-            raise ValueError('in_channels_num must be divisible by reduction_ratio(default = 4)')
-
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-            nn.Linear(in_channels_num, in_channels_num // reduction_ratio, bias=False),
-            nn.ReLU(),
-            nn.Linear(in_channels_num // reduction_ratio, in_channels_num, bias=False),
-            H_sigmoid()
-        )
-
-    def forward(self, x):
-        batch_size, channel_num, _, _ = x.size()
-        y = self.avg_pool(x).view(batch_size, channel_num)
-        y = self.fc(y).view(batch_size, channel_num, 1, 1)
-        return x * y
-
-
 class Block(nn.Module):
     def __init__(self, in_planes, exp_size, out_planes, kernel_size, stride, use_SE, NL):
         super(Block, self).__init__()
@@ -76,6 +59,8 @@ class Block(nn.Module):
         self.exp_size = exp_size
         self.in_planes = in_planes
         self.stride = stride
+        self.reduction_ratio = 4
+        self.use_SE = use_SE
 
         # Expansion
         self.conv1 = nn.Conv2d(in_planes, exp_size, kernel_size=1, stride=1, padding=0, bias=False)
@@ -83,6 +68,7 @@ class Block(nn.Module):
         self.nl1 = nn.ReLU()  # non-linearity
         if use_HS:
             self.nl1 = H_swish()
+
         # Depthwise Convolution
         self.conv2 = nn.Conv2d(exp_size, exp_size, kernel_size=kernel_size, stride=stride,
                                padding=(kernel_size - 1) // 2, groups=exp_size, bias=False)
@@ -90,9 +76,15 @@ class Block(nn.Module):
         self.nl2 = nn.ReLU()  # non-linearity
         if use_HS:
             self.nl2 = H_swish()
-        self.se = nn.Sequential()  # SE module
+
+        # Squeeze-and-Excite
         if use_SE:
-            self.se = SEModule(exp_size)
+            self.se_avg_pool = nn.AdaptiveAvgPool2d(1)
+            self.se_linear1 = nn.Linear(exp_size, exp_size // self.reduction_ratio, bias=False)
+            self.se_nl1 = nn.ReLU()
+            self.se_linear2 = nn.Linear(exp_size // self.reduction_ratio, exp_size, bias=False)
+            self.se_nl2 = H_sigmoid()
+
         # Linear Pointwise Convolution
         self.conv3 = nn.Conv2d(exp_size, out_planes, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn3 = nn.BatchNorm2d(out_planes)
@@ -105,7 +97,8 @@ class Block(nn.Module):
 
     def forward(self, x, expand=False):
         global conv1_time, bn1_time, nl1_time, conv2_time, bn2_time, \
-            nl2_time, se_time, conv3_time, bn3_time
+            nl2_time, se_avg_time, se_linear1_time, se_nl1_time, \
+            se_linear2_time, se_nl2_time, se_mult_time, conv3_time, bn3_time
         # Conv1
         start = time.time()
         out = self.conv1(x)
@@ -116,8 +109,8 @@ class Block(nn.Module):
         start = time.time()
         out = self.nl1(out)
         nl1_time += (time.time() - start)
-        start = time.time()
         # Conv2
+        start = time.time()
         out = self.conv2(out)
         conv2_time += (time.time() - start)
         start = time.time()
@@ -126,12 +119,30 @@ class Block(nn.Module):
         start = time.time()
         out = self.nl2(out)
         nl2_time += (time.time() - start)
-        start = time.time()
         # SE
-        out = self.se(out)
-        se_time += (time.time() - start)
-        start = time.time()
+        if self.use_SE:
+            batch_size, channel_num, _, _ = out.size()
+            start = time.time()
+            out_se = self.se_avg_pool(out).view(batch_size, channel_num)
+            se_avg_time += (time.time() - start)
+            start = time.time()
+            out_se = self.se_linear1(out_se)
+            se_linear1_time += (time.time() - start)
+            start = time.time()
+            out_se = self.se_nl1(out_se)
+            se_nl1_time += (time.time() - start)
+            start = time.time()
+            out_se = self.se_linear2(out_se)
+            se_linear2_time += (time.time() - start)
+            start = time.time()
+            out_se = self.se_nl2(out_se)
+            se_nl2_time += (time.time() - start)
+            out_se = out_se.view(batch_size, channel_num, 1, 1)
+            start = time.time()
+            out = out*out_se
+            se_mult_time += (time.time() - start)
         # Conv3
+        start = time.time()
         out = self.conv3(out)
         conv3_time += (time.time() - start)
         start = time.time()
@@ -208,9 +219,10 @@ class MobileNetV3(nn.Module):
 
     def forward(self, x):
         global conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
-            bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
-            bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
-            conv3_last_time, nl3_last_time, linear_time
+            bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time, \
+            se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, \
+            se_mult_time, conv3_time, bn3_time, conv2_last_time, bn2_last_time, \
+            nl2_last_time, avg_pool_time, conv3_last_time, nl3_last_time, linear_time
 
         # first
         start = time.time()
@@ -258,9 +270,10 @@ class MobileNetV3(nn.Module):
 
         # Measurement
         return out, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
-            bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
-            bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
-            conv3_last_time, nl3_last_time, linear_time
+            bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time, \
+            se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time, \
+            conv3_time, bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, \
+            avg_pool_time, conv3_last_time, nl3_last_time, linear_time
 
 
 def test():

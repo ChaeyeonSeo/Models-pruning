@@ -13,14 +13,14 @@ import pandas as pd
 from models.mobilenetv1 import MobileNet
 from models.mobilenetv2 import MobileNetV2
 from models.mobilenetv3 import MobileNetV3
-from models.efficientnet import  EfficientNet
+from models.efficientnet import EfficientNet
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Argument parser
-parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
+parser = argparse.ArgumentParser(description='Measure latency of MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
-parser.add_argument('--model', type=str, default='efficientnet', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='mobilenetv3', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.0)
 parser.add_argument('--layer', type=str, default="all", help="all, one, two, and three")
 parser.add_argument('--mode', type=int, default=2, help="pruning: 1, measurement: 2")
@@ -86,7 +86,12 @@ relu2_time = 0
 nl2_time = 0
 conv3_time = 0
 bn3_time = 0
-se_time = 0
+se_avg_time = 0
+se_linear1_time = 0
+se_nl1_time = 0
+se_linear2_time = 0
+se_nl2_time = 0
+se_mult_time = 0
 conv2_last_time = 0
 bn2_last_time = 0
 nl2_last_time = 0
@@ -111,7 +116,8 @@ def load_model(model, path=f"{model_path}/{model_name}.pt", print_msg=True):
 
 def test(model, epoch):
     global total_time, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
-        bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, bn3_time, \
+        bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time, se_linear1_time, \
+        se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time, conv3_time, bn3_time, \
         conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, conv3_last_time, \
         nl3_last_time, linear_time
 
@@ -138,14 +144,21 @@ def test(model, epoch):
                 conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, linear_time = model(images)
 
             elif model_name == 'mobilenetv3':
+                # outputs, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
+                # bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
+                # bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
+                # conv3_last_time, nl3_last_time, linear_time = model(images)
                 outputs, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
-                bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
-                bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
-                conv3_last_time, nl3_last_time, linear_time = model(images)
+                bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time, \
+                se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time, \
+                conv3_time, bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, \
+                avg_pool_time, conv3_last_time, nl3_last_time, linear_time = model(images)
+
             else:  # efficientnet
                 outputs, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
-                bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time, \
-                bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
+                bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time, \
+                se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time,\
+                conv3_time, bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
                 linear_time = model(images)
 
             total_time += (time.time() - start_total)
@@ -165,6 +178,12 @@ def test(model, epoch):
 model = load_model(model)
 test(model, 0)
 
+print(conv1_first_time, bn1_first_time, nl1_first_time, conv1_time,
+      bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time,
+      se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time, conv3_time,
+      bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time,
+      conv3_last_time, nl3_last_time, linear_time)
+
 # print(conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time)
 if model_name == 'mobilenetv1':
     layer_labels = ['Conv_first', 'Conv1', 'bn1', 'ReLU1', 'Conv2', 'bn2',
@@ -182,30 +201,35 @@ elif model_name == 'mobilenetv2':
 
 elif model_name == 'mobilenetv3':  # mobilenetv3
     layer_labels = ['Conv1_first', 'bn1_first', 'nl1_first', 'Conv1',
-                    'bn1', 'nl1', 'Conv2', 'bn2', 'nl2', 'SE', 'Conv3', 'bn3',
+                    'bn1', 'nl1', 'Conv2', 'bn2', 'nl2', 'se_avg', 'se_linear1',
+                    'se_nl1', 'se_linear2', 'se_nl1', 'se_mult', 'Conv3', 'bn3',
                     'Conv2_last', 'bn2_last', 'nl2_last', 'Pooling',
                     'Conv3_last', 'bn3_last', 'Linear']
     sizes = [conv1_first_time, bn1_first_time, nl1_first_time, conv1_time,
-             bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time,
-             bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time,
-             conv3_last_time, nl3_last_time, linear_time]
+             bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time,
+             se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time,
+             conv3_time, bn3_time, conv2_last_time, bn2_last_time, nl2_last_time,
+             avg_pool_time, conv3_last_time, nl3_last_time, linear_time]
 
-else: # efficientnet
+else:  # efficientnet
     layer_labels = ['Conv1_first', 'bn1_first', 'nl1_first', 'Conv1',
-                    'bn1', 'nl1', 'Conv2', 'bn2', 'nl2', 'SE', 'Conv3', 'bn3',
-                    'Conv2_last', 'bn2_last', 'nl2_last', 'Pooling',  'Linear']
+                    'bn1', 'nl1', 'Conv2', 'bn2', 'nl2', 'se_avg', 'se_linear1',
+                    'se_nl1', 'se_linear2', 'se_nl1', 'se_mult', 'Conv3', 'bn3',
+                    'Conv2_last', 'bn2_last', 'nl2_last', 'Pooling', 'Linear']
     sizes = [conv1_first_time, bn1_first_time, nl1_first_time, conv1_time,
-             bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_time, conv3_time,
-             bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, linear_time]
+             bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time,
+             se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time,
+             se_mult_time, conv3_time, bn3_time, conv2_last_time,
+             bn2_last_time, nl2_last_time, avg_pool_time, linear_time]
 
 df = pd.DataFrame(data={'layer': layer_labels, 'value': sizes})
 df = df.sort_values('value', ascending=False)
 
-df2 = df[:9].copy()
+df2 = df[:15].copy()
 
 new_row = pd.DataFrame(data={
     'layer': ['others'],
-    'value': [df['value'][9:].sum()]
+    'value': [df['value'][15:].sum()]
 })
 
 df2 = pd.concat([df2, new_row])

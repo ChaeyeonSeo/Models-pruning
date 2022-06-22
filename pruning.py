@@ -25,7 +25,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser(description='Pruning MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--finetune_epochs', type=int, default=10, help='Number of epochs to finetune')
-parser.add_argument('--model', type=str, default='vgg16', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='efficientnet', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.1)
 parser.add_argument('--layer', type=str, default="all", help="one, two, three and all")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
@@ -39,6 +39,8 @@ prune_val = args.prune
 layer = args.layer
 mode = args.mode
 strategy_name = args.strategy
+
+print('model: ', model_name, ' layer: ', layer, ' prune_val: ', prune_val, ' strategy: ', strategy_name)
 
 # model name: mobilenetv1, mobilenetv2, mobilenetv3
 # layer: all, one
@@ -81,8 +83,8 @@ model_names = {
 def load_model(model, path=f"./checkpoints/{model_name}.pt", print_msg=True):
     try:
         model = torch.load(path, map_location=torch.device(device))
-        if print_msg:
-            print(f"[I] Model loaded from {path}")
+        # if print_msg:
+        #     print(f"[I] Model loaded from {path}")
         return model
     except:
         if print_msg:
@@ -107,7 +109,7 @@ def model_size(model, count_zeros=True):
 model = model_names.get(model_name, models.mobilenetv1.MobileNet)()
 model = model.to(torch.device(device))
 
-torchsummary.summary(model, (3, 32, 32))
+# torchsummary.summary(model, (3, 32, 32))
 
 # Define your loss and optimizer
 criterion = nn.CrossEntropyLoss()  # Softmax is internally computed.
@@ -145,12 +147,12 @@ def train(model, epoch):
         _, predicted = outputs.max(1)
         train_total += labels.size(0)
         train_correct += predicted.eq(labels).sum().item()
-        if (batch_idx + 1) % 100 == 0:
-            print('Epoch: [%d/%d], Step: [%d/%d], Loss: %.4f Acc: %.2f%%' % (epoch + 1, finetune_epochs, batch_idx + 1,
-                                                                             len(train_dataset) // batch_size,
-                                                                             train_loss / (batch_idx + 1),
-                                                                             100. * train_correct / train_total))
-    print('Accuracy of the model on the 60000 train images: % f %%' % (100. * train_correct / train_total))
+    #     if (batch_idx + 1) % 100 == 0:
+    #         print('Epoch: [%d/%d], Step: [%d/%d], Loss: %.4f Acc: %.2f%%' % (epoch + 1, finetune_epochs, batch_idx + 1,
+    #                                                                          len(train_dataset) // batch_size,
+    #                                                                          train_loss / (batch_idx + 1),
+    #                                                                          100. * train_correct / train_total))
+    # print('Accuracy of the model on the 60000 train images: % f %%' % (100. * train_correct / train_total))
     return loss
 
 
@@ -179,7 +181,7 @@ def test(model, epoch):
             test_correct += predicted.eq(labels).sum().item()
     acc = 100. * test_correct / test_total
     accuracy.loc[epoch + 1, 'Testing'] = acc
-    print('Test loss: %.4f Test accuracy: %.2f %%' % (test_loss / (batch_idx + 1), acc))
+    # print('Test loss: %.4f Test accuracy: %.2f %%' % (test_loss / (batch_idx + 1), acc))
     if 100. * test_correct / test_total > max_acc:
         max_acc = 100. * test_correct / test_total
         torch.save(model, f"{model_path}/finetune_{epoch + 1}.pt")
@@ -219,9 +221,15 @@ def prune_bn(bn, amount):
     pruning_plan.exec()
 
 
+def prune_linear(linear, amount):
+    pruning_index = strategy(linear.weight, amount=amount)
+    pruning_plan = DG.get_pruning_plan(linear, tp.prune_linear, pruning_index)
+    pruning_plan.exec()
+
+
 if model_name == 'mobilenetv1':
     # first layer
-    if layer == "all":
+    if layer == 'all':
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         for m in model.modules():
@@ -231,7 +239,7 @@ if model_name == 'mobilenetv1':
                 prune_conv(m.conv2, amount=prune_val)
                 prune_bn(m.bn2, amount=prune_val)
         # prune_linear(model.linear, amount=prune_val)
-    else:
+    elif layer == 'one':
         for m in model.modules():
             if isinstance(m, models.mobilenetv1.Block):
                 prune_conv(m.conv2, amount=prune_val)
@@ -295,7 +303,7 @@ elif model_name == 'mobilenetv3':  # mobilenetv3
                 prune_conv(m.conv3, amount=prune_val)
 
 elif model_name == 'vgg16':
-    if layer == 'all':
+    if layer == 'all': # Conv2d
         for m in model.modules():
             if isinstance(m, nn.Conv2d):
                 prune_conv(m, amount=prune_val)
@@ -310,6 +318,8 @@ else: # EfficientNet-b0
                 prune_bn(m.bn1, amount=prune_val)
                 prune_conv(m.conv2, amount=prune_val)
                 prune_bn(m.bn2, amount=prune_val)
+                prune_linear(m.se_linear1, amount=prune_val)
+                prune_linear(m.se_linear2, amount=prune_val)
                 prune_conv(m.conv3, amount=prune_val)
                 prune_bn(m.bn3, amount=prune_val)
         prune_conv(model.conv2, amount=prune_val)
@@ -318,13 +328,21 @@ else: # EfficientNet-b0
         for m in model.modules():
             if isinstance(m, models.efficientnet.Block):
                 prune_conv(m.conv1, amount=prune_val)
-
+    elif layer == 'two':
+        for m in model.modules():
+            if isinstance(m, models.efficientnet.Block):
+                prune_conv(m.conv1, amount=prune_val)
+                prune_conv(m.conv3, amount=prune_val)
+    elif layer == 'three':
+        for m in model.modules():
+            if isinstance(m, models.efficientnet.Block):
+                prune_conv(m.conv3, amount=prune_val)
 
 max_acc = 0
 model = model.to(torch.device(device))
 
 # No fine-tuning after pruning
-torchsummary.summary(model, (3, 32, 32))
+# torchsummary.summary(model, (3, 32, 32))
 first_acc = test(model, 0)
 accuracy.loc[0, 'Testing'] = first_acc
 torch.save(model, f"{model_path}/finetune_0.pt")
