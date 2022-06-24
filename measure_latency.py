@@ -14,16 +14,18 @@ from models.mobilenetv1 import MobileNet
 from models.mobilenetv2 import MobileNetV2
 from models.mobilenetv3 import MobileNetV3
 from models.efficientnet import EfficientNet
+from models.vgg16 import VGG16
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Argument parser
 parser = argparse.ArgumentParser(description='Measure latency of MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
-parser.add_argument('--model', type=str, default='mobilenetv3', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='vgg16', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.0)
 parser.add_argument('--layer', type=str, default="all", help="all, one, two, and three")
 parser.add_argument('--mode', type=int, default=2, help="pruning: 1, measurement: 2")
+parser.add_argument('--strategy', type=str, default="L1", help="L1, L2, and random")
 args = parser.parse_args()
 
 # Always make assignments to local variables from your args at the beginning of your code for better
@@ -33,8 +35,9 @@ model_name = args.model
 prune_val = args.prune
 layer = args.layer
 mode = args.mode
+strategy_name = args.strategy
 
-model_path = f"{model_name}/{layer}/prune_{prune_val}"
+model_path = f"{model_name}/{layer}/{strategy_name}/prune_{prune_val}"
 
 random_seed = 1
 torch.manual_seed(random_seed)
@@ -60,7 +63,8 @@ model_names = {
     'mobilenetv1': MobileNet,
     'mobilenetv2': MobileNetV2,
     'mobilenetv3': MobileNetV3,
-    'efficientnet': EfficientNet
+    'efficientnet': EfficientNet,
+    'vgg16': VGG16
 }
 
 model = model_names.get(model_name, MobileNet)()
@@ -101,6 +105,13 @@ conv3_last_time = 0
 nl3_last_time = 0
 linear_time = 0
 
+conv_time = 0
+relu_time = 0
+pooling_time = 0
+linear1_time = 0
+linear2_time = 0
+linear3_time = 0
+
 
 def load_model(model, path=f"{model_path}/{model_name}.pt", print_msg=True):
     try:
@@ -119,7 +130,8 @@ def test(model, epoch):
         bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time, se_linear1_time, \
         se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time, conv3_time, bn3_time, \
         conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, conv3_last_time, \
-        nl3_last_time, linear_time
+        nl3_last_time, linear_time, conv_time, relu_time, pooling_time, linear1_time, \
+        relu1_time, linear2_time, relu2_time, linear3_time
 
     test_correct = 0
     test_total = 0
@@ -154,12 +166,16 @@ def test(model, epoch):
                 conv3_time, bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, \
                 avg_pool_time, conv3_last_time, nl3_last_time, linear_time = model(images)
 
-            else:  # efficientnet
+            elif model_name == 'efficientnet':  # efficientnet
                 outputs, conv1_first_time, bn1_first_time, nl1_first_time, conv1_time, \
                 bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time, \
-                se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time,\
+                se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time, \
                 conv3_time, bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time, \
                 linear_time = model(images)
+
+            elif model_name == 'vgg16':
+                outputs, conv_time, relu_time, pooling_time, linear1_time, relu1_time, \
+                linear2_time, relu2_time, linear3_time = model(images)
 
             total_time += (time.time() - start_total)
             # print(outputs)
@@ -178,11 +194,11 @@ def test(model, epoch):
 model = load_model(model)
 test(model, 0)
 
-print(conv1_first_time, bn1_first_time, nl1_first_time, conv1_time,
-      bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time,
-      se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time, conv3_time,
-      bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time,
-      conv3_last_time, nl3_last_time, linear_time)
+# print(conv1_first_time, bn1_first_time, nl1_first_time, conv1_time,
+#       bn1_time, nl1_time, conv2_time, bn2_time, nl2_time, se_avg_time,
+#       se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time, se_mult_time, conv3_time,
+#       bn3_time, conv2_last_time, bn2_last_time, nl2_last_time, avg_pool_time,
+#       conv3_last_time, nl3_last_time, linear_time)
 
 # print(conv1_time, bn1_time, relu1_time, conv2_time, bn2_time, relu2_time)
 if model_name == 'mobilenetv1':
@@ -211,7 +227,7 @@ elif model_name == 'mobilenetv3':  # mobilenetv3
              conv3_time, bn3_time, conv2_last_time, bn2_last_time, nl2_last_time,
              avg_pool_time, conv3_last_time, nl3_last_time, linear_time]
 
-else:  # efficientnet
+elif model_name == 'efficientnet':  # efficientnet
     layer_labels = ['Conv1_first', 'bn1_first', 'nl1_first', 'Conv1',
                     'bn1', 'nl1', 'Conv2', 'bn2', 'nl2', 'se_avg', 'se_linear1',
                     'se_nl1', 'se_linear2', 'se_nl1', 'se_mult', 'Conv3', 'bn3',
@@ -221,6 +237,10 @@ else:  # efficientnet
              se_linear1_time, se_nl1_time, se_linear2_time, se_nl2_time,
              se_mult_time, conv3_time, bn3_time, conv2_last_time,
              bn2_last_time, nl2_last_time, avg_pool_time, linear_time]
+
+elif model_name == 'vgg16':
+    layer_labels = ['Conv', 'ReLU', 'Pooling', 'Linear1', 'ReLU1', 'Linear2', 'ReLU2', 'Linear3']
+    sizes = [conv_time, relu_time, pooling_time, linear1_time, relu1_time, linear2_time, relu2_time, linear3_time]
 
 df = pd.DataFrame(data={'layer': layer_labels, 'value': sizes})
 df = df.sort_values('value', ascending=False)
@@ -235,10 +255,11 @@ new_row = pd.DataFrame(data={
 df2 = pd.concat([df2, new_row])
 
 fig1, ax1 = plt.subplots()
-ax1.pie(df2['value'], labels=df2['layer'], autopct='%1.1f%%', startangle=180)
-# ax1.pie(sizes, labels=layer_labels, autopct='%1.1f%%', startangle=180)
+# ax1.pie(df2['value'], labels=df2['layer'], autopct='%1.1f%%', startangle=180)
+ax1.pie(sizes, labels=layer_labels, autopct='%1.1f%%', startangle=0)
 ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-plt.tight_layout()
+# plt.tight_layout()
+plt.title(f'Latency')
 plt.savefig(f'{model_path}/layers_{prune_val}.png')
 # plt.show()
 
@@ -246,7 +267,7 @@ plt.savefig(f'{model_path}/layers_{prune_val}.png')
 print(f'Total time: {total_time}s')
 
 # open the file in the write mode
-with open(f'{model_name}/{layer}/inference_time.csv', 'a') as f:
+with open(f'{model_name}/{layer}/{strategy_name}/inference_time.csv', 'a') as f:
     # create the csv writer
     writer = csv.writer(f)
     # write a row to the csv files

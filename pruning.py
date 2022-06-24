@@ -24,11 +24,12 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # Argument parser
 parser = argparse.ArgumentParser(description='Pruning MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
-parser.add_argument('--finetune_epochs', type=int, default=10, help='Number of epochs to finetune')
-parser.add_argument('--model', type=str, default='efficientnet', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--finetune_epochs', type=int, default=0, help='Number of epochs to finetune')
+parser.add_argument('--model', type=str, default='vgg16', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.1)
 parser.add_argument('--layer', type=str, default="all", help="one, two, three and all")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
+parser.add_argument('--seed', type=int, default=1, help="random seed")
 parser.add_argument('--strategy', type=str, default="L1", help="L1, L2, and random")
 args = parser.parse_args()
 
@@ -38,6 +39,7 @@ model_name = args.model
 prune_val = args.prune
 layer = args.layer
 mode = args.mode
+seed = args.seed
 strategy_name = args.strategy
 
 print('model: ', model_name, ' layer: ', layer, ' prune_val: ', prune_val, ' strategy: ', strategy_name)
@@ -46,10 +48,9 @@ print('model: ', model_name, ' layer: ', layer, ' prune_val: ', prune_val, ' str
 # layer: all, one
 # prune: 0.05 ~ 0.9
 # finetune: 0 ~ 200
-model_path = f"{model_name}/{layer}/prune_{prune_val}"
+model_path = f"{model_name}/{layer}/{strategy_name}/prune_{prune_val}"
 
-random_seed = 1
-torch.manual_seed(random_seed)
+torch.manual_seed(seed)
 
 input_size = 3 * 32 * 32
 num_classes = 10
@@ -109,7 +110,7 @@ def model_size(model, count_zeros=True):
 model = model_names.get(model_name, models.mobilenetv1.MobileNet)()
 model = model.to(torch.device(device))
 
-# torchsummary.summary(model, (3, 32, 32))
+torchsummary.summary(model, (3, 32, 32))
 
 # Define your loss and optimizer
 criterion = nn.CrossEntropyLoss()  # Softmax is internally computed.
@@ -232,17 +233,22 @@ if model_name == 'mobilenetv1':
     if layer == 'all':
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
+        # i = 0
         for m in model.modules():
             if isinstance(m, models.mobilenetv1.Block):
+                # print("number: ", i)
                 prune_conv(m.conv1, amount=prune_val)
                 prune_bn(m.bn1, amount=prune_val)
                 prune_conv(m.conv2, amount=prune_val)
                 prune_bn(m.bn2, amount=prune_val)
-        # prune_linear(model.linear, amount=prune_val)
+                # i += 1
     elif layer == 'one':
+        i = 0
         for m in model.modules():
             if isinstance(m, models.mobilenetv1.Block):
+                print("number: ", i)
                 prune_conv(m.conv2, amount=prune_val)
+                i += 1
 
 elif model_name == 'mobilenetv2':
     if layer == 'all':
@@ -303,13 +309,19 @@ elif model_name == 'mobilenetv3':  # mobilenetv3
                 prune_conv(m.conv3, amount=prune_val)
 
 elif model_name == 'vgg16':
-    if layer == 'all': # Conv2d
+    if layer == 'all': # Prune Conv, Linear1, and Linear2
+        for m in model.modules():
+            if isinstance(m, nn.Conv2d):
+                prune_conv(m, amount=prune_val)
+        prune_linear(model.linear1, amount=prune_val)
+        prune_linear(model.linear2, amount=prune_val)
+    elif layer == 'one': # Prune Conv
         for m in model.modules():
             if isinstance(m, nn.Conv2d):
                 prune_conv(m, amount=prune_val)
 
 else: # EfficientNet-b0
-    if layer == 'all':
+    if layer == 'all': # Conv1, bn1, Blocks(Conv1, bn1, Conv2,bn2, SE, Conv3, bn3), Conv2, bn2
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         for m in model.modules():
@@ -324,16 +336,16 @@ else: # EfficientNet-b0
                 prune_bn(m.bn3, amount=prune_val)
         prune_conv(model.conv2, amount=prune_val)
         prune_bn(model.bn2, amount=prune_val)
-    elif layer == 'one':
+    elif layer == 'one': # Blocks(Conv1)
         for m in model.modules():
             if isinstance(m, models.efficientnet.Block):
                 prune_conv(m.conv1, amount=prune_val)
-    elif layer == 'two':
+    elif layer == 'two': # Blocks(Conv1, Conv3)
         for m in model.modules():
             if isinstance(m, models.efficientnet.Block):
                 prune_conv(m.conv1, amount=prune_val)
                 prune_conv(m.conv3, amount=prune_val)
-    elif layer == 'three':
+    elif layer == 'three': # Blocks (Conv3)
         for m in model.modules():
             if isinstance(m, models.efficientnet.Block):
                 prune_conv(m.conv3, amount=prune_val)
@@ -342,19 +354,19 @@ max_acc = 0
 model = model.to(torch.device(device))
 
 # No fine-tuning after pruning
-# torchsummary.summary(model, (3, 32, 32))
+torchsummary.summary(model, (3, 32, 32))
 first_acc = test(model, 0)
 accuracy.loc[0, 'Testing'] = first_acc
 torch.save(model, f"{model_path}/finetune_0.pt")
 
 # No fine-tuning accuracy
-with open(f'{model_name}/{layer}/no_finetuning_accuracy.csv', 'a') as f:
+with open(f'{model_name}/{layer}/{strategy_name}/no_finetuning_accuracy.csv', 'a') as f:
     writer = csv.writer(f)
     data = [prune_val, first_acc]
     writer.writerow(data)
 
 # Number of parameter
-with open(f'{model_name}/{layer}/parameter_num.csv', 'a') as f1:
+with open(f'{model_name}/{layer}/{strategy_name}/parameter_num.csv', 'a') as f1:
     writer1 = csv.writer(f1)
     parameter_num = model_size(model)
     data = [prune_val, parameter_num]
@@ -369,7 +381,7 @@ for fine_tune_epoch in range(finetune_epochs):
 accuracy.to_csv(f'{model_path}/accuracy.csv', index=False)
 
 # Fine-tuning best accuracy
-with open(f'{model_name}/{layer}/finetuning_best_accuracy.csv', 'a') as f2:
+with open(f'{model_name}/{layer}/{strategy_name}/finetuning_best_accuracy.csv', 'a') as f2:
     writer2 = csv.writer(f2)
     data = [prune_val, max_acc]
     writer2.writerow(data)

@@ -1,34 +1,381 @@
-#!/bin/sh
-# mobilenetv2 all
-python pruning_mobilenet.py --model mobilenetv2 --prune 0.01 --layer all
-python pruning_mobilenet.py --model mobilenetv2 --prune 0.03 --layer all
-python pruning_mobilenet.py --model mobilenetv2 --prune 0.04 --layer all
-
-#python pruning.py --prune 0.0
-#python pruning.py --prune 0.05
-#python pruning.py --prune 0.1
-#python pruning.py --prune 0.2
-#python pruning.py --prune 0.3
-#python pruning.py --prune 0.4
-#python pruning.py --prune 0.5
-#python pruning.py --prune 0.6
-#python pruning.py --prune 0.7
-#python pruning.py --prune 0.8
-#python pruning.py --prune 0.9
-
-#python measure_latency.py --prune 0.0
-#python measure_latency.py --prune 0.05
-#python measure_latency.py --prune 0.1
-#python measure_latency.py --prune 0.2
-#python measure_latency.py --prune 0.3
-#python measure_latency.py --prune 0.4
-#python measure_latency.py --prune 0.5
-#python measure_latency.py --prune 0.6
-#python measure_latency.py --prune 0.7
-#python measure_latency.py --prune 0.8
-#python measure_latency.py --prune 0.9
-
-#python pruning.py --prune 0.05 --finetune_epochs 200
-#python pruning.py --prune 0.1 --finetune_epochs 200 --layer "all"
-#python pruning.py --prune 0.2 --finetune_epochs 200 --layer "all"
-#python pruning.py --prune 0.3 --finetune_epochs 200 --layer "all"
+##!/bin/sh
+## MBV1 unstructured
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.0 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.05 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.1 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.2 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.3 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.4 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.5 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.6 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.7 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.8 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.0 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.05 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.1 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.2 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.3 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.4 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.5 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.6 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.7 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.8 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.9 --layer one
+#
+##MBV2
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.0 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.05 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.1 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.2 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.3 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.4 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.5 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.6 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.7 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.8 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.0 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.05 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.1 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.2 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.3 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.4 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.5 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.6 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.7 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.8 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.9 --layer one
+#
+##MBV3
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.0 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.05 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.1 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.2 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.3 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.4 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.5 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.6 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.7 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.8 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.0 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.05 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.1 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.2 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.3 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.4 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.5 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.6 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.7 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.8 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.9 --layer one
+#
+## EfficientNet
+#python pruning_unstructured.py --model efficientnet --prune 0.0 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.05 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.1 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.2 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.3 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.4 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.5 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.6 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.7 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.8 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model efficientnet --prune 0.0 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.05 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.1 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.2 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.3 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.4 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.5 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.6 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.7 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.8 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.9 --layer one
+#
+## VGG16
+#python pruning_unstructured.py --model vgg16 --prune 0.0 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.05 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.1 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.2 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.3 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.4 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.5 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.6 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.7 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.8 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model vgg16 --prune 0.0 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.05 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.1 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.2 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.3 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.4 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.5 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.6 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.7 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.8 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.9 --layer one
+#
+## ROUND 2 ########################################################################
+## MBV1 unstructured
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.0 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.05 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.1 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.2 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.3 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.4 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.5 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.6 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.7 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.8 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.0 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.05 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.1 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.2 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.3 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.4 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.5 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.6 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.7 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.8 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.9 --layer one
+#
+##MBV2
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.0 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.05 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.1 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.2 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.3 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.4 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.5 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.6 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.7 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.8 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.0 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.05 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.1 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.2 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.3 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.4 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.5 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.6 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.7 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.8 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.9 --layer one
+#
+##MBV3
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.0 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.05 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.1 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.2 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.3 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.4 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.5 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.6 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.7 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.8 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.0 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.05 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.1 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.2 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.3 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.4 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.5 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.6 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.7 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.8 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.9 --layer one
+#
+## EfficientNet
+#python pruning_unstructured.py --model efficientnet --prune 0.0 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.05 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.1 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.2 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.3 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.4 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.5 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.6 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.7 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.8 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model efficientnet --prune 0.0 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.05 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.1 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.2 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.3 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.4 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.5 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.6 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.7 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.8 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.9 --layer one
+#
+## VGG16
+#python pruning_unstructured.py --model vgg16 --prune 0.0 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.05 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.1 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.2 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.3 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.4 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.5 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.6 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.7 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.8 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model vgg16 --prune 0.0 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.05 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.1 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.2 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.3 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.4 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.5 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.6 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.7 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.8 --layer one
+#python pruning_unstructured.py --model vgg16 --prune 0.9 --layer one
+#
+#
+## ROUND 3 ########################################################################
+## MBV1 unstructured
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.0 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.05 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.1 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.2 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.3 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.4 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.5 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.6 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.7 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.8 --layer all
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.0 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.05 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.1 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.2 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.3 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.4 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.5 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.6 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.7 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.8 --layer one
+#python pruning_unstructured.py --model mobilenetv1 --prune 0.9 --layer one
+#
+##MBV2
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.0 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.05 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.1 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.2 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.3 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.4 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.5 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.6 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.7 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.8 --layer all
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.0 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.05 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.1 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.2 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.3 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.4 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.5 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.6 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.7 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.8 --layer one
+#python pruning_unstructured.py --model mobilenetv2 --prune 0.9 --layer one
+#
+##MBV3
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.0 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.05 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.1 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.2 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.3 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.4 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.5 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.6 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.7 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.8 --layer all
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.0 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.05 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.1 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.2 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.3 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.4 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.5 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.6 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.7 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.8 --layer one
+#python pruning_unstructured.py --model mobilenetv3 --prune 0.9 --layer one
+#
+## EfficientNet
+#python pruning_unstructured.py --model efficientnet --prune 0.0 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.05 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.1 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.2 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.3 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.4 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.5 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.6 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.7 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.8 --layer all
+#python pruning_unstructured.py --model efficientnet --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model efficientnet --prune 0.0 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.05 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.1 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.2 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.3 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.4 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.5 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.6 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.7 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.8 --layer one
+#python pruning_unstructured.py --model efficientnet --prune 0.9 --layer one
+#
+## VGG16
+#python pruning_unstructured.py --model vgg16 --prune 0.0 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.05 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.1 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.2 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.3 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.4 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.5 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.6 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.7 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.8 --layer all
+#python pruning_unstructured.py --model vgg16 --prune 0.9 --layer all
+#
+#python pruning_unstructured.py --model vgg16 --prune 0.0 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.05 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.1 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.2 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.3 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.4 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.5 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.6 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.7 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.8 --layer one
+python pruning_unstructured.py --model vgg16 --prune 0.9 --layer one
+#
+#
+#
