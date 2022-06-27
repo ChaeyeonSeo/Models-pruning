@@ -67,6 +67,8 @@ class MobileNet(nn.Module):
         self.mode = mode
 
     def change_mode(self):
+        # mode 1: pruning
+        # mode 2: measurement
         self.mode = 2
 
     def _make_layers(self, in_planes):
