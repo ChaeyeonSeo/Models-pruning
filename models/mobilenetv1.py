@@ -56,7 +56,7 @@ class Block(nn.Module):
 
 class MobileNet(nn.Module):
     # (128,2) means conv planes=128, conv stride=2, by default conv stride=1
-    cfg = [64, (128,2), 128, (256,2), 256, (512,2), 512, 512, 512, 512, 512, (1024,2), 1024]
+    cfg = [64, (128, 2), 128, (256, 2), 256, (512, 2), 512, 512, 512, 512, 512, (1024, 2), 1024]
 
     def __init__(self, num_classes=10, mode=1):
         super(MobileNet, self).__init__()
@@ -75,7 +75,7 @@ class MobileNet(nn.Module):
         layers = []
         for x in self.cfg:
             out_planes = x if isinstance(x, int) else x[0]
-            stride = 1 if (x, int) else x[1]
+            stride = 1 if isinstance(x, int) else x[1]
             layers.append(Block(in_planes, out_planes, stride))
             in_planes = out_planes
         return nn.Sequential(*layers)

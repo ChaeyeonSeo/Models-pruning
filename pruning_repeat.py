@@ -25,9 +25,9 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--finetune_epochs', type=int, default=5, help='Number of epochs to finetune')
-parser.add_argument('--model', type=str, default='mobilenetv1', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='mobilenetv1_default', help='mobilenetv1_default, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.05)
-parser.add_argument('--layer', type=str, default="one", help="one, two, three and all")
+parser.add_argument('--layer', type=str, default="one", help="one, two, three and one")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
 args = parser.parse_args()
 
@@ -38,8 +38,8 @@ prune_val = args.prune
 layer = args.layer
 mode = args.mode
 
-# model name: mobilenetv1, mobilenetv2, mobilenetv3
-# layer: all, one
+# model name: mobilenetv1_default, mobilenetv2, mobilenetv3
+# layer: one, one
 # prune: 0.05 ~ 0.9
 # finetune: 0 ~ 200
 model_path = f"{model_name}/{layer}/repeat"
@@ -68,7 +68,7 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=bat
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 model_names = {
-    'mobilenetv1': models.mobilenetv1.MobileNet,
+    'mobilenetv1_default': models.mobilenetv1.MobileNet,
     'mobilenetv2': models.mobilenetv2.MobileNetV2,
     'mobilenetv3': models.mobilenetv3.MobileNetV3,
 }
@@ -232,7 +232,7 @@ while base > 70:
         prune_val = round(prune_val, 2)
     DG = tp.DependencyGraph()
     DG.build_dependency(model, example_inputs=torch.randn(1, 3, 32, 32))
-    if real_model_name == 'mobilenetv1':
+    if real_model_name == 'mobilenetv1_default':
         for m in model.modules():
             if isinstance(m, models.mobilenetv1.Block):
                 prune_conv(m.conv2, amount=prune_val)
@@ -283,13 +283,13 @@ while base > 70:
 
 torch.save(model, f"{model_path}/max.pt")
 '''
-if model_name == 'mobilenetv1':
+if model_name == 'mobilenetv1_default':
     # first layer
-    if layer == "all":
+    if layer == "one":
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         for m in model.modules():
-            if isinstance(m, models.mobilenetv1.Block):
+            if isinstance(m, models.mobilenetv1_default.Block):
                 prune_conv(m.conv1, amount=prune_val)
                 prune_bn(m.bn1, amount=prune_val)
                 prune_conv(m.conv2, amount=prune_val)
@@ -297,11 +297,11 @@ if model_name == 'mobilenetv1':
         # prune_linear(model.linear, amount=prune_val)
     else:
         for m in model.modules():
-            if isinstance(m, models.mobilenetv1.Block):
+            if isinstance(m, models.mobilenetv1_default.Block):
                 prune_conv(m.conv2, amount=prune_val)
 
 elif model_name == 'mobilenetv2':
-    if layer =='all':
+    if layer =='one':
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         for m in model.modules():
@@ -330,7 +330,7 @@ elif model_name == 'mobilenetv2':
                 prune_conv(m.conv3, amount=prune_val)
 
 else: # mobilenetv3
-    if layer == 'all':
+    if layer == 'one':
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         for m in model.modules():

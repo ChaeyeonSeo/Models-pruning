@@ -20,7 +20,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser(description='Training MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs to train')
-parser.add_argument('--model', type=str, default='mobilenetv3', help='mobilenetv1, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='mobilenetv3', help='mobilenetv1_default, mobilenetv2, or mobilenetv3')
 args = parser.parse_args()
 
 # Always make assignments to local variables from your args at the beginning of your code for better
@@ -50,7 +50,7 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=bat
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 model_names = {
-    'mobilenetv1': MobileNet,
+    'mobilenetv1_default': MobileNet,
     'mobilenetv2': MobileNetV2,
     'mobilenetv3': MobileNetV3,
     'vgg16': VGG16,
