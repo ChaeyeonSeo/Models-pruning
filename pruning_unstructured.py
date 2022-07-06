@@ -26,7 +26,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 parser = argparse.ArgumentParser(description='Pruning MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--finetune_epochs', type=int, default=10, help='Number of epochs to finetune')
-parser.add_argument('--model', type=str, default='mobilenetv1_default', help='mobilenetv1_default, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='mobilenetv1', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.1)
 parser.add_argument('--layer', type=str, default="one", help="one, two, three and one")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
@@ -43,7 +43,7 @@ strategy_name = args.strategy
 
 print('model: ', model_name, ' layer: ', layer, ' prune_val: ', prune_val, ' strategy: ', strategy_name)
 
-# model name: mobilenetv1_default, mobilenetv2, mobilenetv3
+# model name: mobilenetv1, mobilenetv2, mobilenetv3
 # layer: one, one
 # prune: 0.05 ~ 0.9
 # finetune: 0 ~ 200
@@ -73,7 +73,7 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=bat
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 model_names = {
-    'mobilenetv1_default': models.mobilenetv1.MobileNet,
+    'mobilenetv1': models.mobilenetv1.MobileNet,
     'mobilenetv2': models.mobilenetv2.MobileNetV2,
     'mobilenetv3': models.mobilenetv3.MobileNetV3,
     'vgg16': models.vgg16.VGG16,
@@ -195,8 +195,8 @@ test(model, 0)
 
 # Unstructured Pruning
 model = model.to(torch.device('cpu'))
-if model_name == 'mobilenetv1_default':
-    if layer == 'one': # conv1, bn1, Block(conv1, bn1, conv2, bn2)
+if model_name == 'mobilenetv1':
+    if layer == 'all': # conv1, bn1, Block(conv1, bn1, conv2, bn2)
         prune.l1_unstructured(model.conv1, name='weight', amount=prune_val)
         model.conv1 = torch.nn.utils.prune.remove(model.conv1, name='weight')
         prune.l1_unstructured(model.bn1, name='weight', amount=prune_val)
@@ -224,7 +224,7 @@ if model_name == 'mobilenetv1_default':
                 # i += 1
 
 elif model_name == 'mobilenetv2':
-    if layer == 'one':
+    if layer == 'all':
         prune.l1_unstructured(model.conv1, name='weight', amount=prune_val)
         model.conv1 = torch.nn.utils.prune.remove(model.conv1, name='weight')
         prune.l1_unstructured(model.bn1, name='weight', amount=prune_val)
@@ -267,7 +267,7 @@ elif model_name == 'mobilenetv2':
                 m.conv3 = torch.nn.utils.prune.remove(m.conv3, name='weight')
 
 elif model_name == 'mobilenetv3':  # mobilenetv3
-    if layer == 'one':
+    if layer == 'all':
         prune.l1_unstructured(model.conv1, name='weight', amount=prune_val)
         model.conv1 = torch.nn.utils.prune.remove(model.conv1, name='weight')
         prune.l1_unstructured(model.bn1, name='weight', amount=prune_val)
@@ -311,7 +311,7 @@ elif model_name == 'mobilenetv3':  # mobilenetv3
                 m.conv3 = torch.nn.utils.prune.remove(m.conv3, name='weight')
 
 elif model_name == 'vgg16':
-    if layer == 'one':  # Conv2d
+    if layer == 'all':  # Conv2d
         for m in model.modules():
             if isinstance(m, nn.Conv2d):
                 prune.l1_unstructured(m, name='weight', amount=prune_val)
@@ -327,7 +327,7 @@ elif model_name == 'vgg16':
                 m = torch.nn.utils.prune.remove(m, name='weight')
 
 else:  # EfficientNet-b0
-    if layer == 'one':
+    if layer == 'all':
         prune.l1_unstructured(model.conv1, name='weight', amount=prune_val)
         model.conv1 = torch.nn.utils.prune.remove(model.conv1, name='weight')
         prune.l1_unstructured(model.bn1, name='weight', amount=prune_val)
@@ -409,9 +409,9 @@ def prune_linear(linear, amount):
     pruning_plan = DG.get_pruning_plan(linear, tp.prune_linear, pruning_index)
     pruning_plan.exec()
 
-if model_name == 'mobilenetv1_default':
+if model_name == 'mobilenetv1':
     # first layer
-    if layer == 'one':
+    if layer == 'all':
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         # i = 0
@@ -432,7 +432,7 @@ if model_name == 'mobilenetv1_default':
                 # i += 1
 
 elif model_name == 'mobilenetv2':
-    if layer == 'one':
+    if layer == 'all':
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         for m in model.modules():
@@ -461,7 +461,7 @@ elif model_name == 'mobilenetv2':
                 prune_conv(m.conv3, amount=prune_val)
 
 elif model_name == 'mobilenetv3':  # mobilenetv3
-    if layer == 'one':
+    if layer == 'all':
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         for m in model.modules():
@@ -490,7 +490,7 @@ elif model_name == 'mobilenetv3':  # mobilenetv3
                 prune_conv(m.conv3, amount=prune_val)
 
 elif model_name == 'vgg16':
-    if layer == 'one': # Conv2d
+    if layer == 'all': # Conv2d
         for m in model.modules():
             if isinstance(m, nn.Conv2d):
                 prune_conv(m, amount=prune_val)
@@ -502,7 +502,7 @@ elif model_name == 'vgg16':
                 prune_conv(m, amount=prune_val)
 
 else: # EfficientNet-b0
-    if layer == 'one':
+    if layer == 'all':
         prune_conv(model.conv1, amount=prune_val)
         prune_bn(model.bn1, amount=prune_val)
         for m in model.modules():

@@ -6,7 +6,8 @@
       <sourceFolder url="file://$MODULE_DIR$/data" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/models" isTestSource="false" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.8 (MobileNets-pruning)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="MobileNets-pruning-demo" />
   </component>
 </module>

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/MobileNets-pruning.iml" filepath="$PROJECT_DIR$/.idea/MobileNets-pruning.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../MobileNets-pruning-demo/.idea/MobileNets-pruning-demo.iml" filepath="$PROJECT_DIR$/../MobileNets-pruning-demo/.idea/MobileNets-pruning-demo.iml" />
     </modules>
   </component>
 </project>

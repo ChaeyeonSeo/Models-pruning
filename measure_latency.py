@@ -21,7 +21,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # Argument parser
 parser = argparse.ArgumentParser(description='Measure latency of MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
-parser.add_argument('--model', type=str, default='vgg16', help='mobilenetv1_default, mobilenetv2, or mobilenetv3')
+parser.add_argument('--model', type=str, default='vgg16', help='mobilenetv1, mobilenetv2, or mobilenetv3')
 parser.add_argument('--prune', type=float, default=0.0)
 parser.add_argument('--layer', type=str, default="one", help="one, one, two, and three")
 parser.add_argument('--mode', type=int, default=2, help="pruning: 1, measurement: 2")
@@ -60,7 +60,7 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=bat
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 model_names = {
-    'mobilenetv1_default': MobileNet,
+    'mobilenetv1': MobileNet,
     'mobilenetv2': MobileNetV2,
     'mobilenetv3': MobileNetV3,
     'efficientnet': EfficientNet,
@@ -146,7 +146,7 @@ def test(model, epoch):
             labels = labels.to(torch.device(device))
             # Perform the actual inference
             start_total = time.time()
-            if model_name == 'mobilenetv1_default':
+            if model_name == 'mobilenetv1':
                 outputs, conv1_first_time, conv1_time, bn1_time, nl1_time, \
                 conv2_time, bn2_time, nl2_time, avg_pool_time, linear_time = model(images)
 

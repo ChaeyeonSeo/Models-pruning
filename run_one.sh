@@ -1,12 +1,12 @@
 #!/bin/sh
 
-#python pruning.py --prune 0.0
-#python pruning.py --prune 0.05
-#python pruning.py --prune 0.1
-#python pruning.py --prune 0.2
-#python pruning.py --prune 0.3
-#python pruning.py --prune 0.4
-#python pruning.py --prune 0.5
+python pruning.py --prune 0.0
+python pruning.py --prune 0.05
+python pruning.py --prune 0.1
+python pruning.py --prune 0.2
+python pruning.py --prune 0.3
+python pruning.py --prune 0.4
+python pruning.py --prune 0.5
 # Error -> delete +1 in channel number
 python pruning.py --prune 0.6
 python pruning.py --prune 0.7
