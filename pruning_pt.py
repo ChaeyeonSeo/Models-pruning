@@ -20,10 +20,10 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # Argument parser
 parser = argparse.ArgumentParser(description='Pruning MobileNet V1, V2, and V3')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
-parser.add_argument('--finetune_epochs', type=int, default=5, help='Number of epochs to finetune')
+parser.add_argument('--finetune_epochs', type=int, default=0, help='Number of epochs to finetune')
 parser.add_argument('--model', type=str, default='mobilenetv1', help='mobilenetv1, mobilenetv2, or mobilenetv3')
-parser.add_argument('--prune', type=float, default=0.1)
-parser.add_argument('--layer', type=str, default="one", help="one, two, three and one")
+parser.add_argument('--prune', type=float, default=0.0)
+parser.add_argument('--layer', type=str, default="one", help="one, two, three and all")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
 parser.add_argument('--seed', type=int, default=1, help="random seed")
 parser.add_argument('--strategy', type=str, default="L1", help="L1, L2, and random")
@@ -174,7 +174,7 @@ def test(model, epoch):
             test_correct += predicted.eq(labels).sum().item()
     acc = 100. * test_correct / test_total
     accuracy.loc[epoch + 1, 'Testing'] = acc
-    # print('Test loss: %.4f Test accuracy: %.2f %%' % (test_loss / (batch_idx + 1), acc))
+    print('Test loss: %.4f Test accuracy: %.2f %%' % (test_loss / (batch_idx + 1), acc))
     if 100. * test_correct / test_total > max_acc:
         max_acc = 100. * test_correct / test_total
         torch.save(model, f"{model_path}/finetune_{epoch + 1}.pt")
@@ -224,6 +224,7 @@ def channel_fraction_pruning(model, fraction=0.2):
             # print(removed_idx)
             number += 1
     model.mask_dict = mask_dict
+    # print(mask_dict)
 
 
 res1 = []
@@ -247,6 +248,7 @@ num_params = []
 #     num_params.append(model_size(model, prune_thres == 0))
 
 # print('Before pruning:', model_size(model))
+# print(model.layers[11].conv1.weight)
 if pruning_method == 'mag_prune':
     prune_model_thres(model, prune_val)
 else:
@@ -254,9 +256,12 @@ else:
 model._apply_mask()
 model = remove_channel(model)
 # print('After pruning:', model_size(model))
+print(model.layers[11].conv1.weight)
 model = model.to(device)
 # torchsummary.summary(model, (3, 32, 32))
 max_acc = 0
+
+print("model size: ", model_size(model))
 
 first_acc = test(model, 0)
 accuracy.loc[0, 'Testing'] = first_acc

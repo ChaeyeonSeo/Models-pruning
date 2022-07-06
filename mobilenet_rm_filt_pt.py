@@ -133,7 +133,7 @@ def remove_channel(input_model):
     next_layer_score_list = torch.sum(torch.abs(new_model.layers[0].conv1.weight.data), dim=(1,2,3))
     score_list = score_list * next_layer_score_list
     out_planes_num = int(torch.count_nonzero(score_list))
-    out_planes_idx = torch.squeeze( torch.nonzero(score_list, as_tuple=False))
+    out_planes_idx = torch.squeeze(torch.nonzero(score_list, as_tuple=False))
     conv1_wgt=copy.deepcopy(new_model.conv1.weight.data)
     new_model.conv1 = nn.Conv2d(3, out_planes_num, kernel_size=3, stride=1, padding=1, bias=False)
     new_model.bn1 = nn.BatchNorm2d(out_planes_num)
@@ -142,7 +142,7 @@ def remove_channel(input_model):
     in_planes_num = out_planes_num
     in_planes_idx = out_planes_idx
     for i, block in enumerate(new_model.layers):
-        if i in [1, 3 ,5, 11]:
+        if i in [1, 3, 5, 11]:
             stride = 2
         else:
             stride = 1
@@ -152,7 +152,7 @@ def remove_channel(input_model):
         new_model.layers[i].bn1 =  nn.BatchNorm2d(in_planes_num)
         new_model.layers[i].conv1.weight.data[:,:,:,:] = conv1_wgt[in_planes_idx,:,:,:]
         score_list = torch.sum(torch.abs(block.conv2.weight.data), dim=(1,2,3))
-        if i <len(new_model.layers)-1:
+        if i < len(new_model.layers)-1:
             next_layer_score_list = torch.sum(torch.abs(new_model.layers[i+1].conv1.weight.data), dim=(1,2,3))
             score_list = score_list * next_layer_score_list
         out_planes_num = int(torch.count_nonzero(score_list))
@@ -163,7 +163,7 @@ def remove_channel(input_model):
                                               padding=0, bias=False)
         new_model.layers[i].bn2 = nn.BatchNorm2d(out_planes_num)
 
-        for idx_out,n in enumerate(out_planes_idx):
+        for idx_out, n in enumerate(out_planes_idx):
             new_model.layers[i].conv2.weight.data[idx_out,:,:,:] = conv2_wgt[n,in_planes_idx,:,:]
         in_planes_num = out_planes_num
         in_planes_idx = out_planes_idx
@@ -171,6 +171,6 @@ def remove_channel(input_model):
     lin_bias=copy.deepcopy(new_model.linear.bias.data)
     new_model.linear = nn.Linear(in_planes_num, 10)
 
-    new_model.linear.weight.data = lin_wgt[:,out_planes_idx]
+    new_model.linear.weight.data = lin_wgt[:, out_planes_idx]
     new_model.linear.bias.data = lin_bias
     return new_model
