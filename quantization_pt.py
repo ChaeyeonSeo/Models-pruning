@@ -52,14 +52,19 @@ class MobilenetDataReader(CalibrationDataReader):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="EE379K - ONNX Qunatizer")
-    parser.add_argument('--model', type=str, default='05', help='prune val ex 05, 1, 5')
+    parser.add_argument('--model', type=str, default='efficientnet', help='prune val ex 05, 1, 5')
+    parser.add_argument('--pruning', type=str, default='0.2', help='prune val ex 05, 1, 5')
     args = parser.parse_args()
 
     model_name = args.model
-    model = f'models/{model_name}.onnx'
-    model_quant = f'Project/models/{model_name}.uint8quant.onnx'
-    model_quant_static = f'models/{model_name}.uint8quant_static.onnx'
+    pruning_amount = args.pruning
+    model = f'onnx/{model_name}_{pruning_amount}.onnx'
+    model_quant = f'onnx/dynamic_quantized/{model_name}_{pruning_amount}.uint8quant.onnx'
+    model_quant_static = f'onnx/static_quantized/{model_name}_{pruning_amount}.uint8quant_static.onnx'
+    # model = f'onnx/{model_name}.onnx'
+    # model_quant = f'onnx/dynamic_quantized/{model_name}.uint8quant.onnx'
+    # model_quant_static = f'onnx/static_quantized/{model_name}.uint8quant_static.onnx'
     quantize_dynamic(Path(model), Path(model_quant), weight_type=QuantType.QUInt8)
-    dr = MobilenetDataReader('Project/test_deployment')
+    dr = MobilenetDataReader('onnx/Project/test_deployment')
     quantize_static(model, model_quant_static, dr)
 

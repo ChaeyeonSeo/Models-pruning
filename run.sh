@@ -1,80 +1,246 @@
 #!/bin/sh
 
-python pruning_pt.py --prune 0.0
-python pruning_pt.py --prune 0.05
-python pruning_pt.py --prune 0.1
-python pruning_pt.py --prune 0.2
-python pruning_pt.py --prune 0.3
-python pruning_pt.py --prune 0.4
-python pruning_pt.py --prune 0.5
-python pruning_pt.py --prune 0.6
-python pruning_pt.py --prune 0.7
-python pruning_pt.py --prune 0.8
-python pruning_pt.py --prune 0.9
+# Default
+python deploy_onnx_measurement.py --model mobilenetv1 --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1 --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1 --file 3
+pkill python
+sleep 5m
 
+python deploy_onnx_measurement.py --model mobilenetv2 --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2 --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2 --file 3
+pkill python
+sleep 5m
 
-## vgg L2
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.0 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.05 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.1 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.2 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.3 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.4 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.5 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.6 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.7 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.8 --layer one --strategy L1
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.9 --layer one --strategy L1
-#
-##python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.0 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.05 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.1 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.2 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.3 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.4 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.5 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.6 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.7 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.8 --layer one --strategy L1
-#python pruning.py --finetune_epochs 10 --model vgg16 --prune 0.9 --layer one --strategy L1
-#
-##python pruning.py --prune 0.0 --layer two
-##python pruning.py --prune 0.05 --layer two
-##python pruning.py --prune 0.1 --layer two
-##python pruning.py --prune 0.2 --layer two
-##python pruning.py --prune 0.3 --layer two
-##python pruning.py --prune 0.4 --layer two
-##python pruning.py --prune 0.5 --layer two
-##python pruning.py --prune 0.6 --layer two
-##python pruning.py --prune 0.7 --layer two
-##python pruning.py --prune 0.8 --layer two
-##python pruning.py --prune 0.9 --layer two
-##
-##python pruning.py --prune 0.0 --layer three
-##python pruning.py --prune 0.05 --layer three
-##python pruning.py --prune 0.1 --layer three
-##python pruning.py --prune 0.2 --layer three
-##python pruning.py --prune 0.3 --layer three
-##python pruning.py --prune 0.4 --layer three
-##python pruning.py --prune 0.5 --layer three
-##python pruning.py --prune 0.6 --layer three
-##python pruning.py --prune 0.7 --layer three
-##python pruning.py --prune 0.8 --layer three
-##python pruning.py --prune 0.9 --layer three
-#
-##python measure_latency.py --prune 0.0
-##python measure_latency.py --prune 0.05
-##python measure_latency.py --prune 0.1
-##python measure_latency.py --prune 0.2
-##python measure_latency.py --prune 0.3
-##python measure_latency.py --prune 0.4
-##python measure_latency.py --prune 0.5
-##python measure_latency.py --prune 0.6
-##python measure_latency.py --prune 0.7
-##python measure_latency.py --prune 0.8
-##python measure_latency.py --prune 0.9
-#
-## python pruning.py --prune 0.05 --finetune_epochs 200
-##python pruning.py --prune 0.1 --finetune_epochs 200
-##python pruning.py --prune 0.2 --finetune_epochs 200
-##python pruning_mobilenet.py --prune 0.3 --finetune_epochs 200
+python deploy_onnx_measurement.py --model mobilenetv3 --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3 --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3 --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model effcientnet --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet --file 3
+pkill python
+sleep 5m
+
+# Pruned
+python deploy_onnx_measurement.py --model mobilenetv1_0.2 --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1_0.2 --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1_0.2 --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv2_0.2 --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2_0.2 --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2_0.2 --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv3_0.2 --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3_0.2 --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3_0.2 --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model effcientnet_0.2 --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet_0.2 --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet_0.2 --file 3
+pkill python
+sleep 5m
+
+# Dynamic quantized Default
+python deploy_onnx_measurement.py --model mobilenetv1.uint8quant --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1.uint8quant --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1.uint8quant --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv2.uint8quant --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2.uint8quant --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2.uint8quant --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv3.uint8quant --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3.uint8quant --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3.uint8quant --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model effcientnet.uint8quant --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet.uint8quant --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet.uint8quant --file 3
+pkill python
+sleep 5m
+
+# Dynamic quantized Pruned
+python deploy_onnx_measurement.py --model mobilenetv1_0.2.uint8quant --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1_0.2.uint8quant --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1_0.2.uint8quant --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv2_0.2.uint8quant --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2_0.2.uint8quant --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2_0.2.uint8quant --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv3_0.2.uint8quant --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3_0.2.uint8quant --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3_0.2.uint8quant --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model effcientnet_0.2.uint8quant --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet_0.2.uint8quant --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet_0.2.uint8quant --file 3
+pkill python
+sleep 5m
+
+# Static quantized Default
+python deploy_onnx_measurement.py --model mobilenetv1.uint8quant_static --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1.uint8quant_static --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1.uint8quant_static --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv2.uint8quant_static --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2.uint8quant_static --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2.uint8quant_static --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv3.uint8quant_static --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3.uint8quant_static --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3.uint8quant_static --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model effcientnet.uint8quant_static --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet.uint8quant_static --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet.uint8quant_static --file 3
+pkill python
+sleep 5m
+
+# Static quantized Pruned
+python deploy_onnx_measurement.py --model mobilenetv1_0.2.uint8quant_static --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1_0.2.uint8quant_static --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv1_0.2.uint8quant_static --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv2_0.2.uint8quant_static --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2_0.2.uint8quant_static --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv2_0.2.uint8quant_static --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model mobilenetv3_0.2.uint8quant_static --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3_0.2.uint8quant_static --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model mobilenetv3_0.2.uint8quant_static --file 3
+pkill python
+sleep 5m
+
+python deploy_onnx_measurement.py --model effcientnet_0.2.uint8quant_static --file 1
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet_0.2.uint8quant_static --file 2
+pkill python
+sleep 5m
+python deploy_onnx_measurement.py --model effcientnet_0.2.uint8quant_static --file 3
+pkill python
