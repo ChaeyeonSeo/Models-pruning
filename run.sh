@@ -244,3 +244,4 @@ pkill python
 sleep 5m
 python deploy_onnx_measurement.py --model effcientnet_0.2.uint8quant_static --file 3
 pkill python
+sleep 5m

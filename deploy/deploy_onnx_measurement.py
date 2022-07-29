@@ -9,7 +9,7 @@ import subprocess
 
 start = time.time()
 parser = argparse.ArgumentParser(description="EE379K - ONNX Runtime Enivronment script")
-parser.add_argument('--model', type=str, default='mobilenetv1', help='prune val ex 05, 1, 5')
+parser.add_argument('--model', type=str, default='mobilenetv1.uint8quant', help='prune val ex 05, 1, 5')
 parser.add_argument('--device', type=str, default='rpi', help='rpi or mc1')
 parser.add_argument('--file', type=str, default='1')
 args = parser.parse_args()
@@ -19,7 +19,7 @@ file_name = args.file
 
 measure = subprocess.Popen(f"python measurement.py --file {model_name}_{file_name}", shell=True)
 
-model_path = './models/'
+model_path = '/home/student/MobileNets-pruning/onnx/dynamic_quantized/'
 onnx_model_name = model_path + f"{model_name}.onnx"
 
 # Create Inference session using ONNX runtime
@@ -44,12 +44,12 @@ total_time = 0
 total = 0
 right = 0
 # The test_deployment folder contains all 10.000 images from the testing dataset of CIFAR10 in .png format
-for filename in tqdm(os.listdir("/home/student/HW3_files/test_deployment")):
+for filename in tqdm(os.listdir("/home/student/MobileNets-pruning/Project/test_deployment/")):
     # Take each image, one by one, and make inference
-    with Image.open(os.path.join("/home/student/HW3_files/test_deployment/", filename)).resize((32, 32)) as img:
+    with Image.open(os.path.join("/home/student/MobileNets-pruning/Project/test_deployment/", filename)).resize((32, 32)) as img:
         # print("Image shape:", np.float32(img).shape)
 
-        # normalize image
+        # Normalize image
         input_image = (np.float32(img) / 255. - mean) / std
 
         # Add the Batch axis in the data Tensor (C, H, W)

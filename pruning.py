@@ -23,9 +23,9 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Argument parser
 parser = argparse.ArgumentParser(description='Pruning MobileNet V1, V2, and V3')
+parser.add_argument('--model', type=str, default='mobilenetv1', help='mobilenetv1, mobilenetv2, or mobilenetv3, efficientnet')
 parser.add_argument('--batch_size', type=int, default=128, help='Number of samples per mini-batch')
 parser.add_argument('--finetune_epochs', type=int, default=10, help='Number of epochs to finetune')
-parser.add_argument('--model', type=str, default='mobilenetv1', help='mobilenetv1, mobilenetv2, or mobilenetv3, efficientnet')
 parser.add_argument('--prune', type=float, default=0.2)
 parser.add_argument('--layer', type=str, default="one", help="one, two, three and all")
 parser.add_argument('--mode', type=int, default=1, help="pruning: 1, measurement: 2")
